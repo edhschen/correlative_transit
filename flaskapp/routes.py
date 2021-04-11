@@ -20,10 +20,9 @@ all_data = proc.load_bike()
 @app.route('/index')
 def index():
 
-    bike_data = proc.get_month_year_data(2019,1,all_data)
     with open('data/station.json') as f:
         station_data = json.load(f)
-    return render_template('bike_trip_vis.html',agg_trip=bike_data,station_data=station_data)
+    return render_template('bike_trip_vis.html',station_data=station_data)
 @app.route('/get_month_year_data')
 def get_month_year_data():
     month = int(request.args.get('month'))
