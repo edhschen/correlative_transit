@@ -1,0 +1,160 @@
+<html>
+
+<head>
+  <title>deck.gl LineLayer Example</title>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+
+  <script src="https://unpkg.com/deck.gl@^8.0.0/dist.min.js"></script>
+  <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.4.0/mapbox-gl.js"></script>
+  <!-- <script type="text/javascript" src="vis_data/2020_q4_all_trips.json"></script> -->
+  <style type="text/css">
+    body {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .deck-tooltip {
+      font-family: Helvetica, Arial, sans-serif;
+      padding: 6px !important;
+      margin: 8px;
+      max-width: 300px;
+      font-size: 10px;
+    }
+
+    #filter {
+      position: absolute;
+      top: 0;
+      left: 0;
+      margin: 12px;
+      padding: 20px;
+      font-size: 12px;
+      line-height: 1.5;
+      z-index: 1;
+      background: #fff;
+      font-family: Helvetica, Arial, sans-serif;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.15);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="tooltip"></div>
+  <div id="filter">
+    <select name="year" id="year" onchange="render()">
+      <option value=2019>2019</option>
+      <option value=2020>2020</option>
+    </select>
+    <select name="month" id="month" onchange="render()">
+      <option value=1>Jan</option>
+      <option value=2>Feb</option>
+      <option value=3>Mar</option>
+      <option value=4>Apr</option>
+      <option value=5>May</option>
+      <option value=6>Jun</option>
+      <option value=7>Jul</option>
+      <option value=8>Aug</option>
+      <option value=9>Sep</option>
+      <option value=10>Oct</option>
+      <option value=11>Nov</option>
+      <option value=12>Dec</option>
+    </select>
+
+  </div>
+</body>
+
+<script type="text/javascript">
+
+  const { DeckGL, LineLayer, GeoJsonLayer, ArcLayer } = deck;
+
+  function render() {
+    var year = document.getElementById("year").value
+
+    var month = document.getElementById("month").value
+
+    var data;
+    $.getJSON(
+      '/get_month_year_data',
+      {
+        "month": month,
+        'year': year
+      },
+      function (d) {
+        ready(d)
+      })
+    function ready(data) {
+      var station_data = JSON.parse('{{ station_data | tojson | safe }}')
+
+
+      trips_line = new ArcLayer({
+        id: 'line',
+        data: data,
+        opacity: 0.8,
+        pickable: true,
+        getSourcePosition: function (d) {
+
+          lat = d.start_lat
+          lng = d.start_lon
+          return [lng, lat]
+        },
+        getTargetPosition: function (d) {
+
+          lat = d.end_lat
+          lng = d.end_lon
+          return [lng, lat]
+        },
+        getSourceColor: d => [255, 0, 0],
+        getTargetColor: d => [0, 0, 255],
+        getWidth: d => {
+          // console.log(d.count)
+          return d.count / 10
+        }
+      })
+
+      station_geo = new GeoJsonLayer({
+        id: "station_geo",
+        data: station_data,
+        pickable: true,
+        stroked: false,
+        filled: true,
+        extruded: true,
+        lineWidthScale: 20,
+        lineWidthMinPixels: 2,
+        getFillColor: [160, 160, 180, 200],
+        getLineColor: [0, 255, 0],
+        getRadius: 30,
+        getLineWidth: 1,
+        getElevation: 30,
+      });
+
+      new DeckGL({
+        mapStyle: 'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json',
+        initialViewState: {
+          latitude: 34.0522,
+          longitude: -118.2437,
+          zoom: 11,
+          maxZoom: 16,
+          pitch: 50,
+          bearing: 0
+        },
+        controller: true,
+        layers: [station_geo, trips_line],
+        getTooltip: ({ object }) => {
+          return object && object.count && `Trip Count ${object.count}`
+        }
+      });
+    }
+  }
+
+
+
+  function getColor(d) {
+    const z = d.end_lat;
+    const r = z / 10000;
+    return [255 * (1 - r * 2), 128 * r, 255 * r, 255 * (1 - r)];
+  }
+  render()
+</script>
+
+</html>
