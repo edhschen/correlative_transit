@@ -63,9 +63,7 @@
 
   </div>
 </body>
-
 <script type="text/javascript">
-
   const { DeckGL, LineLayer, GeoJsonLayer, ArcLayer } = deck;
 
   function render() {
@@ -85,8 +83,6 @@
       })
     function ready(data) {
       var station_data = JSON.parse('{{ station_data | tojson | safe }}')
-
-
       trips_line = new ArcLayer({
         id: 'line',
         data: data,
@@ -107,7 +103,6 @@
         getSourceColor: d => [255, 0, 0],
         getTargetColor: d => [0, 0, 255],
         getWidth: d => {
-          // console.log(d.count)
           return d.count / 10
         }
       })
@@ -146,8 +141,6 @@
       });
     }
   }
-
-
 
   function getColor(d) {
     const z = d.end_lat;
