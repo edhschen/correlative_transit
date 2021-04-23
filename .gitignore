@@ -1,2 +1,4 @@
 data_proc/__pycache__
 flaskapp/__pycache__
+venv
+.idea

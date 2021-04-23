@@ -89,5 +89,39 @@ def get_month_year_data(year,month,df):
 
     return json.loads(df_res.to_json(orient='records'))
 
+def get_exits_data(year, month, df):
+    df_res = df[(df['month'] == month) & (df['year'] == year)]
 
-load_bike_full()
+    return json.loads(df_res.to_json(orient='records'))
+
+def load_transit():
+    name = "data/transit/body_19.csv"
+    df = pd.read_csv(name)
+    # print(df)
+    df['date'] = pd.to_datetime(df['date'])
+
+    ridership = df[["stop_name", "daytime_routes", "division", "line", "borough", "structure", "gtfs_longitude",
+                    "gtfs_latitude", "complex_id", "date", "entries", "exits"]]
+
+    # print(ridership.dtypes)
+
+    ridership = ridership.dropna(how='any')
+    ridership['month'] = pd.DatetimeIndex(ridership['date']).month
+    ridership['year'] = pd.DatetimeIndex(ridership['date']).year
+    # print(ridership.head(50))
+
+    ridership.groupby('date')[['stop_name', 'entries']].apply(
+        lambda x: x.set_index('stop_name').to_dict()).to_json(r'.\data\entries_2019.json')
+
+
+    ridership = ridership.groupby(
+        ['stop_name', 'gtfs_latitude', 'gtfs_longitude', 'complex_id', "month", "year"]).agg(
+        {'entries': "sum", 'exits': "sum"})
+    ridership.columns = ['total_entries', 'total_exits']
+    ridership = ridership.reset_index()
+
+    return ridership
+
+if __name__ == '__main__':
+    transit_data = load_transit()
+    print(transit_data)
