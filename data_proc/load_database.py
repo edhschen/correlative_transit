@@ -30,6 +30,7 @@ def load_bike():
     trip_pos = trip_pos.reset_index()
 
     return trip_pos
+
 def load_bike_full():
     name = "data/concate_data.csv"
     df = pd.read_csv(name)
@@ -94,6 +95,8 @@ def get_exits_data(year, month, df):
 
     return json.loads(df_res.to_json(orient='records'))
 
+
+
 def load_transit():
     name = "data/transit/body_19.csv"
     df = pd.read_csv(name)
@@ -121,6 +124,32 @@ def load_transit():
     ridership = ridership.reset_index()
 
     return ridership
+
+def load_air_traffic():
+    name='data/air/flightlist_20190101_20190131.csv'
+    df = pd.read_csv(name)
+
+    df['firstseen'] = pd.to_datetime(df['firstseen'])
+    df['lastseen'] = pd.to_datetime(df['lastseen'])
+    df['day'] = pd.to_datetime(df['day']).dt.date
+
+    airport_list = ['KBOS','KORH','KMHT','KPVD','KDCA','KIAD','KBWI','KJFK','KLGA','KEWR','KSFO','KSJC','KLAX','KSAN','KORD','KMDW']
+    #airport_list = ['KLAX']
+
+    filtered_df = df[df['origin'].isin(airport_list)]
+
+    filtered_df = filtered_df.dropna(subset=['destination'])
+
+    #filtered_df['month'] = pd.to_datetime(df['day']).dt.strftime('%b')
+    filtered_df['month'] = pd.DatetimeIndex(filtered_df['day']).month
+    filtered_df['year'] = pd.DatetimeIndex(filtered_df['day']).year
+
+    departures = filtered_df.groupby(['origin','destination','month','year']).agg({'origin':'count','latitude_1':'first','longitude_1':'first','latitude_2':'first','longitude_2':'first'})
+    departures.columns = ['count','latitude_1','longitude_1','latitude_2','longitude_2']
+    departures = departures.reset_index()
+
+#   print(trip_pos)
+    return departures
 
 if __name__ == '__main__':
     transit_data = load_transit()
