@@ -9,6 +9,7 @@ from flask import request
 import data_proc.load_database as proc
 import json
 all_data = proc.load_bike()
+
 # The following two lines define two routes for the Flask app, one for just
 # '/', which is the default route for a host, and one for '/index', which is
 # a common name for the main page of a site.
@@ -32,4 +33,3 @@ def get_month_year_data():
 
     return json.dumps(bike_data)
 
-    
