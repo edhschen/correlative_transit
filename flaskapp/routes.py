@@ -18,7 +18,9 @@ from matplotlib.figure import Figure
 import random
 from data_proc.bike_data_analysis import ARIMA_predict_year_station
 
-transit_data = proc.load_transit()
+transit_data_2019 = proc.load_transit('New York', 2019)
+transit_data_2020 = proc.load_transit('New York', 2020)
+transit_data_2021 = proc.load_transit('New York', 2021)
 all_data = proc.load_bike()
 all_bike_data = proc.load_bike_full()
 cta_bus = proc.load_cta_bus()
@@ -67,7 +69,12 @@ def get_month_year_data():
 def get_month_year_transit_data():
     month = int(request.args.get('month'))
     year = int(request.args.get('year'))
-    filtered_transit_data = proc.get_exits_data(year, month, transit_data)
+    if year == 2019:
+        filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2019, month, year)
+    elif year == 2020:
+        filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2020, month, year)
+    elif year == 2021:
+        filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2021, month, year)
 
     return json.dumps(filtered_transit_data)
 
