@@ -31,15 +31,12 @@
 
   <script type="text/javascript">
     function updateDate (e){
-      console.log(e.target.value)
       var date = e.target.value.split("-")
-      console.log(date)
       $.ajax({
       type:"GET",
       url: "/cta/bus/daily/"+date[1]+date[2]+date[0],
       dataType: "json",
       success: function(r){
-        console.log(r)
         generateMap(r)
       }
     })
@@ -124,7 +121,7 @@
         [189, 0, 38],
         [128, 0, 38]
       ];
-      console.log(data)
+      // console.log(data)
       const railsLayer = new GeoJsonLayer({
         id:"raillines",
         data: '/static/geojson/CTA_RailLines.geojson',
