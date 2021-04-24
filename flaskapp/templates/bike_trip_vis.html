@@ -20,7 +20,7 @@
       padding: 6px !important;
       margin: 8px;
       max-width: 300px;
-      font-size: 10px;
+      font-size: 20px;
     }
 
     #filter {
@@ -36,7 +36,23 @@
       font-family: Helvetica, Arial, sans-serif;
       box-shadow: 0 0 4px rgba(0, 0, 0, 0.15);
     }
+
+    #prediction {
+      position: absolute;
+      z-index: 1;
+      right: 0;
+      top: 0;
+    }
+
+    #prediction_loading {
+      display: None
+    }
+    #prediction_fail {
+      display: None
+    }
+    
   </style>
+
 </head>
 
 <body>
@@ -61,17 +77,60 @@
       <option value=12>Dec</option>
     </select>
   </div>
-  <!-- <div id="prediction">
-    <img src="/bike_prediction.png"
-  </div> -->
+
+  <div id="prediction">
+    <input type="hidden" id="prediction_station_id" value=-1><br><br>
+    <input type="text" id="prediction_station_name" value="" readonly><br><br>
+
+    <button onclick="train_prediction_model()">Train and Visualize Prediction Model</button>
+    <h1 id="prediction_loading">Loading .....</h1>
+    <h1 id="prediction_fail">No Prediction For This Station</h1>
+
+    <div id="prediction_img" width="400">
+    </div>
 </body>
+
 <script type="text/javascript">
   const { DeckGL, LineLayer, GeoJsonLayer, ArcLayer } = deck;
 
-  function render() {
-    var year = document.getElementById("year").value
+  function train_prediction_model() {
+    station_name = $("#prediction_station_name").val()
+    station_id = $("#prediction_station_id").val()
+    year = $("#year").val()
+    console.log(station_name)
+    if (station_id!=-1){
+      $.ajax(
+        {
+          method: 'GET',
+          url: `/bike_prediction_${year}_${station_id}.svg`,
+          data: {
+            "station_name": station_name,
+          },
+          beforeSend: d => {
+            $("#prediction_fail").hide()
+            $("#prediction_loading").show()
+            $("#prediction_img").html("")
+          },
+          success: function (data) {
+            if (data.documentElement){
+              $("#prediction_loading").hide()
+              $("#prediction_img").html(data.documentElement)
+            }else{
+              $("#prediction_loading").hide()
 
-    var month = document.getElementById("month").value
+              $("#prediction_fail").show()
+            }
+          }
+        }
+      )
+      render()
+    }
+  }
+  function render() {
+    var prediction_station = $("#prediction_station_id").val()
+    var year = $("#year").val()
+
+    var month = $("#month").val()
 
     var data;
     $.getJSON(
@@ -91,7 +150,6 @@
         opacity: 0.8,
         pickable: true,
         getSourcePosition: function (d) {
-
           lat = d.start_lat
           lng = d.start_lon
           return [lng, lat]
@@ -118,19 +176,52 @@
         extruded: true,
         lineWidthScale: 20,
         lineWidthMinPixels: 2,
-        getFillColor: [160, 160, 180, 200],
+        getFillColor: d => {
+          if (d.properties.kioskId == prediction_station) {
+            return [255, 0, 0, 255]
+          } else if (d.properties.hover_select == true) {
+            console.log("asfasgasg")
+            return [0, 255, 0, 255]
+          } else {
+            return [160, 160, 180, 200]
+          }
+        },
         getLineColor: [0, 255, 0],
-        getRadius: 30,
+
+        getRadius: d => {
+          if (d.properties.kioskId == prediction_station) {
+            return 90
+          } else {
+            return 30
+          }
+        },
         getLineWidth: 1,
         getElevation: 30,
+        onClick: (info, event) => {
+          var obj = info.object
+          // debugger;
+          var station_id = info.object.properties.kioskId
+          var station_name = info.object.properties.name
+          $("#prediction_station_id").val(station_id)
+          $("#prediction_station_name").val(station_name)
+
+        },
+        // onHover:(info,event)=>{
+        //   // debugger;
+        //   obj = info.object;
+        //   if (obj){
+        //     obj.properties.hover_select = true;
+        //     console.log(obj)
+        //   }
+        // }
       });
 
       new DeckGL({
-        mapStyle: 'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json',
+        mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
         initialViewState: {
           latitude: 34.0522,
           longitude: -118.2437,
-          zoom: 11,
+          zoom: 12,
           maxZoom: 16,
           pitch: 50,
           bearing: 0
@@ -138,8 +229,20 @@
         controller: true,
         layers: [station_geo, trips_line],
         getTooltip: ({ object }) => {
-          return object && object.count && `Trip Count ${object.count}`
-        }
+          if (object) {
+            console.log(object)
+            if (object.count) {
+              var str = `Trip Count ${object.count}\n From Station: ${object.start_station}\n To Station: ${object.end_station}\n`
+
+              return str
+            } else if (object.properties.kioskId) {
+              console.log("dsafasf")
+              var str = `Station Name: ${object.properties.name}\n Station Id: ${object.properties.kioskId}\n`
+              return str
+            } 
+          }
+        },
+
       });
     }
   }
@@ -150,6 +253,7 @@
     return [255 * (1 - r * 2), 128 * r, 255 * r, 255 * (1 - r)];
   }
   render()
+  // train_prediction_model()
 </script>
 
 </html>
