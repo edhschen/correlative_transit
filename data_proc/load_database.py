@@ -131,6 +131,21 @@ def load_air_traffic():
 #   print(trip_pos)
     return departures
 
+def q33(x):
+    return x.quantile(0.33)
+def q66(x):
+    return x.quantile(0.66)
+def load_cta_bus():
+    name="data/cta/cta_bus_data.csv"
+    df = pd.read_csv(name)
+    gb = df.groupby("route")
+    q = gb.agg({'rides': [q33, q66]})
+    df = df.join(q, on='route', rsuffix='_r')
+    df["q33"] = df[("rides", "q33")]
+    df["q66"] = df[("rides", "q66")]
+    df = df.drop([("rides", "q33"), ("rides", "q66")],axis=1)
+    return df
+
 if __name__ == '__main__':
     transit_data = load_transit()
     print(transit_data)
