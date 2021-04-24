@@ -8,8 +8,10 @@ from flask import render_template
 from flask import request
 import data_proc.load_database as proc
 import json
+
 transit_data = proc.load_transit()
 all_data = proc.load_bike()
+
 
 # The following two lines define two routes for the Flask app, one for just
 # '/', which is the default route for a host, and one for '/index', which is
@@ -21,24 +23,25 @@ all_data = proc.load_bike()
 @app.route('/')
 @app.route('/index')
 def index():
-
     with open('data/station.json') as f:
         station_data = json.load(f)
-    return render_template('bike_trip_vis.html',station_data=station_data)
+    return render_template('bike_trip_vis.html', station_data=station_data)
+
 
 @app.route('/transit')
 def transit():
-
     # return render_template('transit_vis.html',transit_data=transit_data)
     return render_template('transit_vis.html')
+
 
 @app.route('/get_month_year_data')
 def get_month_year_data():
     month = int(request.args.get('month'))
     year = int(request.args.get('year'))
-    bike_data = proc.get_month_year_data(year,month,all_data)
+    bike_data = proc.get_month_year_data(year, month, all_data)
 
     return json.dumps(bike_data)
+
 
 @app.route('/get_month_year_transit_data')
 def get_month_year_transit_data():
