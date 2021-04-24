@@ -14,7 +14,9 @@ import numpy as np
 transit_data = proc.load_transit()
 all_data = proc.load_bike()
 cta_bus = proc.load_cta_bus()
-air_data = proc.load_air_traffic()
+air_data_2019 = proc.load_air_traffic('flightdata_2019.csv')
+air_data_2020 = proc.load_air_traffic('flightdata_2020.csv')
+
 # The following two lines define two routes for the Flask app, one for just
 # '/', which is the default route for a host, and one for '/index', which is
 # a common name for the main page of a site.
@@ -62,8 +64,10 @@ def get_month_year_transit_data():
 def get_month_year_air_traffic_data():
     month = int(request.args.get('month'))
     year = int(request.args.get('year'))
-    filtered_air_data = proc.get_month_year_data(year, month, air_data)
-
+    if year==2019:
+        filtered_air_data = proc.get_month_year_data(year, month, air_data_2019)
+    elif year==2020:
+        filtered_air_data = proc.get_month_year_data(year, month, air_data_2020)
     return json.dumps(filtered_air_data)
 
 @app.route('/cta/bus/daily/<date>')
