@@ -9,10 +9,11 @@ from flask import request
 import data_proc.load_database as proc
 import json
 
+import pandas as pd
+import numpy as np
 transit_data = proc.load_transit()
 all_data = proc.load_bike()
-
-
+cta_bus = proc.load_cta_bus()
 # The following two lines define two routes for the Flask app, one for just
 # '/', which is the default route for a host, and one for '/index', which is
 # a common name for the main page of a site.
@@ -50,3 +51,20 @@ def get_month_year_transit_data():
     filtered_transit_data = proc.get_exits_data(year, month, transit_data)
 
     return json.dumps(filtered_transit_data)
+
+
+@app.route('/cta/bus/daily/<date>')
+def cta_bus_daily(date):
+    data = proc.load_cta_bus()
+    print(type(data))
+    date = date[:2] + "/" + date[2:4] + "/" + date[4:]
+    print(cta_bus)
+    data = data[data["date"]==date].set_index("route")
+    print(data)
+    data = data.to_dict("index")
+    print(data)
+    return json.dumps(data)
+
+@app.route('/cta/bus')
+def cta_bus():
+    return render_template("cta_visualize_stops.html")
