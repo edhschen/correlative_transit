@@ -36,6 +36,9 @@ cta_bus = proc.load_cta_bus()
 # produced by calling `index()` below.
 
 @app.route('/')
+def index():
+    return render_template('index.html')
+
 @app.route('/la/bike')
 def la_bike():
     with open('data/station.json') as f:
@@ -90,18 +93,13 @@ def get_month_year_air_traffic_data():
 
 @app.route('/cta/bus/daily/<date>')
 def cta_bus_daily(date):
-    data = proc.load_cta_bus()
-    print(type(data))
     date = date[:2] + "/" + date[2:4] + "/" + date[4:]
-    print(cta_bus)
-    data = data[data["date"]==date].set_index("route")
-    print(data)
+    data = cta_bus[cta_bus["date"]==date].set_index("route")
     data = data.to_dict("index")
-    print(data)
     return json.dumps(data)
 
 @app.route('/cta/bus')
-def cta_bus():
+def cta_bus_render():
     return render_template("cta_visualize_stops.html")
 
 
