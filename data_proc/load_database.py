@@ -46,7 +46,7 @@ def load_bike_full():
 
     trip_pos['month'] = pd.DatetimeIndex(trip_pos['start_time']).month
     trip_pos['year'] = pd.DatetimeIndex(trip_pos['start_time']).year
-    
+
     trip_pos = trip_pos[(trip_pos['year']==2019)&(trip_pos['start_station']==3049)]
     rows = trip_pos.iloc[0]
     ts = rows['ts']
@@ -90,40 +90,97 @@ def get_month_year_data(year,month,df):
 
     return json.loads(df_res.to_json(orient='records'))
 
-def get_exits_data(year, month, df):
+
+def load_transit_gtfs(city='New York'):
+    file_routes = "data/transit/gtfs/" + city + "/routes.csv"
+    file_trips = "data/transit/gtfs/" + city + "/trips.csv"
+    file_stop_times = "data/transit/gtfs/" + city + "/stop_times.csv"
+    file_stops = "data/transit/gtfs/" + city + "/stops.csv"
+
+    df_routes = pd.read_csv(file_routes)
+    df_trips = pd.read_csv(file_trips)
+    df_stop_times = pd.read_csv(file_stop_times)
+    df_stops = pd.read_csv(file_stops)
+    df_routes['route_id'] = df_routes['route_id'].astype(str)
+    df_trips['route_id'] = df_trips['route_id'].astype(str)
+    # print(df_trips.dtypes, '\n', df_routes.dtypes)
+
+    m = df_trips[['route_id', 'trip_id']].merge(df_routes[['route_id']], on='route_id', how='inner', sort=True)
+    # print(m.info())
+    n = m[['route_id', 'trip_id']].merge(df_stop_times[['stop_id', 'trip_id']], on='trip_id', how='inner', sort=True)
+    # print(n.info())
+    n = n[['stop_id', 'route_id']]
+    n.reset_index()
+    n = n.groupby(['stop_id'], as_index=False).agg({
+        'route_id': 'first'
+    })
+    n.reset_index()
+    # print(n.info())
+    o = n[['route_id', 'stop_id']].merge(df_stops[['stop_id', 'stop_name', 'stop_lat', 'stop_lon']], on='stop_id', how='inner', sort=True)
+    o.reset_index()
+    o["COORDINATES"] = o[["stop_lon", "stop_lat"]].values.tolist()
+    o.reset_index()
+    o = o.drop(['stop_lat', 'stop_lon'], 1)
+    # print(o.info())
+    # o.to_json(r'.\data\stop_list.json', orient='records', lines=True)
+    return o
+
+
+def load_transit(city='New York', year=2019):
+    data = 'data/transit/body_' + str(year) + '.csv'
+
+    df_ridership = pd.read_csv(data)
+    # df_stops_routes = load_transit_gtfs(city)
+    # print(df_ridership.info())
+    # print(df_stops_routes.info())
+
+    # df_stops_routes = df_stops_routes.groupby(['stop_name'], as_index=False).agg({
+    #     'route_id': 'first',
+    #     'stop_id': 'first',
+    #     'COORDINATES': 'first'
+    # })
+    # print(df_stops_routes.head(50))
+
+    df_ridership['date'] = pd.to_datetime(df_ridership['date'])
+
+    ridership = df_ridership[["stop_name", "daytime_routes", "division", "line", "borough", "structure", "gtfs_longitude",
+                    "gtfs_latitude", "complex_id", "date", "entries", "exits"]]
+    # print(ridership.dtypes)
+
+    ridership = ridership.dropna(how='any')
+
+    ridership['month'] = pd.DatetimeIndex(ridership['date']).month
+    ridership['year'] = pd.DatetimeIndex(ridership['date']).year
+    # print(ridership.info())
+
+    ridership["COORDINATES"] = ridership[["gtfs_longitude", "gtfs_latitude"]].values.tolist()
+    ridership.reset_index()
+    ridership = ridership.drop(["division", "line", "borough", "structure", 'gtfs_longitude', 'gtfs_latitude'], 1)
+    # print(ridership.info())
+
+    # ridership.groupby('date')[['stop_name', 'entries']].apply(
+    #     lambda x: x.set_index('stop_name').to_dict()).to_json(r'.\data\entries_2019.json')
+    #
+    #
+    ridership = ridership.groupby(['stop_name', "daytime_routes", "month", "year"]).agg(
+        {
+            'entries': "sum",
+            'exits': "sum",
+            'COORDINATES': 'first'
+        }
+    )
+    ridership.columns = ['total_entries', 'total_exits', 'COORDINATES']
+    ridership = ridership.reset_index()
+    # print(ridership.info())
+
+    return ridership
+
+
+def get_month_year_transit_ridership_data(df, month='Jan', year=2019):
     df_res = df[(df['month'] == month) & (df['year'] == year)]
 
     return json.loads(df_res.to_json(orient='records'))
 
-
-
-def load_transit():
-    name = "data/transit/body_19.csv"
-    df = pd.read_csv(name)
-    # print(df)
-    df['date'] = pd.to_datetime(df['date'])
-
-    ridership = df[["stop_name", "daytime_routes", "division", "line", "borough", "structure", "gtfs_longitude",
-                    "gtfs_latitude", "complex_id", "date", "entries", "exits"]]
-
-    # print(ridership.dtypes)
-
-    ridership = ridership.dropna(how='any')
-    ridership['month'] = pd.DatetimeIndex(ridership['date']).month
-    ridership['year'] = pd.DatetimeIndex(ridership['date']).year
-    # print(ridership.head(50))
-
-    ridership.groupby('date')[['stop_name', 'entries']].apply(
-        lambda x: x.set_index('stop_name').to_dict()).to_json(r'.\data\entries_2019.json')
-
-
-    ridership = ridership.groupby(
-        ['stop_name', 'gtfs_latitude', 'gtfs_longitude', 'complex_id', "month", "year"]).agg(
-        {'entries': "sum", 'exits': "sum"})
-    ridership.columns = ['total_entries', 'total_exits']
-    ridership = ridership.reset_index()
-
-    return ridership
 
 def load_air_traffic(fil_name):
     name='data/air/'+fil_name
@@ -156,5 +213,7 @@ def load_cta_bus():
     return df
 
 if __name__ == '__main__':
+    # transit_data = load_transit()
+    # print(transit_data)
     transit_data = load_transit()
-    print(transit_data)
+    # print(transit_data)

@@ -65,121 +65,119 @@
   function render(){
   var year = document.getElementById("year").value
   var month = document.getElementById("month").value
-  var dat;
+    
   $.getJSON(
   '/get_month_year_transit_data',
   {
   "month": month,
   'year': year
   },
-  function (d) {
-  ready(d)
+  function (data) {
+  ready(data)
   })
-  function ready(d) {
-  console.log(d)
 
-  const colorscale = d3.scaleOrdinal()
-          .range(d3.schemePaired)
-          // .range(d3.schemeCategory10)
-          .domain(d.map(function (d){
-          // console.log(d)
-          return d.route_id}));
-
-  // const layer = new ScatterplotLayer({
-  // id: 'ScatterplotLayer',
-  // data: 'https://ankit-kaul.github.io/data/stop_list.json',
-  
-  // /* props from ScatterplotLayer class */
-  
-  // // filled: true,
-  // getFillColor: [255, 140, 0],
-  // // getFillColor:   d => {
-  // // // console.log(colorscale(d.route_id))
-  // // return colorscale(d.route_id)},
-  // getLineColor: [0, 0, 0],
-  // // getLineWidth: 1,
-  // getPosition: d => d.COORDINATES,
-  // getRadius: d => Math.sqrt(d.exits),
-  // // lineWidthMaxPixels: Number.MAX_SAFE_INTEGER,
-  // lineWidthMinPixels: 1,
-  // // lineWidthScale: 1,
-  // // lineWidthUnits: 'meters',
-  // radiusMaxPixels: 200,
-  // radiusMinPixels: 1,
-  // radiusScale: 15,
-  // // radiusUnits: 'meters',
-  // stroked: true,
-  
-  // /* props inherited from Layer class */
-  
-  // // autoHighlight: false,
-  // // coordinateOrigin: [0, 0, 0],
-  // // coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
-  // // highlightColor: [0, 0, 128, 128],
-  // // modelMatrix: null,
-  // opacity: 0.8,
-  // pickable: true,
-  // // visible: true,
-  // // wrapLongitude: false,
-  // });
-
-
-  const layers = [ new ScatterplotLayer({
-  id: 'ScatterplotLayer',
-  data: 'https://ankit-kaul.github.io/data/stop_list.json',
-  
-  /* props from ScatterplotLayer class */
-  
-  // filled: true,
-  // getFillColor: [255, 140, 0],
-  getFillColor:   d => {
-    var color = colorscale(d.route_id)
+  function ready(data) {
+    console.log(data)
+    const colorscale = d3.scaleOrdinal()
+    .range(d3.schemePaired)
+    // .range(d3.schemeCategory10)
+    .domain(data.map(function (d){
+    // console.log(d)
+    return d.daytime_routes}));
+    // const layer = new ScatterplotLayer({
+    // id: 'ScatterplotLayer',
+    // data: 'https://ankit-kaul.github.io/data/stop_list.json',
+    
+    // /* props from ScatterplotLayer class */
+    
+    // // filled: true,
+    // getFillColor: [255, 140, 0],
+    // // getFillColor:   d => {
+    // // // console.log(colorscale(d.route_id))
+    // // return colorscale(d.route_id)},
+    // getLineColor: [0, 0, 0],
+    // // getLineWidth: 1,
+    // getPosition: d => d.COORDINATES,
+    // getRadius: d => Math.sqrt(d.exits),
+    // // lineWidthMaxPixels: Number.MAX_SAFE_INTEGER,
+    // lineWidthMinPixels: 1,
+    // // lineWidthScale: 1,
+    // // lineWidthUnits: 'meters',
+    // radiusMaxPixels: 200,
+    // radiusMinPixels: 1,
+    // radiusScale: 15,
+    // // radiusUnits: 'meters',
+    // stroked: true,
+    
+    // /* props inherited from Layer class */
+    
+    // // autoHighlight: false,
+    // // coordinateOrigin: [0, 0, 0],
+    // // coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+    // // highlightColor: [0, 0, 128, 128],
+    // // modelMatrix: null,
+    // opacity: 0.8,
+    // pickable: true,
+    // // visible: true,
+    // // wrapLongitude: false,
+    // });
+    const layers = [ new ScatterplotLayer({
+    id: 'ScatterplotLayer',
+    data: data,
+    
+    /* props from ScatterplotLayer class */
+    
+    // filled: true,
+    // getFillColor: [255, 140, 0],
+    getFillColor:   d => {
+    var color = colorscale(d.daytime_routes)
     var color_rgb = d3.rgb(color)
-  // console.log(colorscale(d.route_id))
-  return [color_rgb.r,color_rgb.g,color_rgb.b]},
-  // getLineColor: [0, 0, 0],
-  // getLineWidth: 1,
-  getPosition: d => d.COORDINATES,
-  getRadius: d => 10,
-  // lineWidthMaxPixels: Number.MAX_SAFE_INTEGER,
-  lineWidthMinPixels: 1,
-  // lineWidthScale: 1,
-  // lineWidthUnits: 'meters',
-  radiusMaxPixels: 200,
-  radiusMinPixels: 1,
-  radiusScale: 15,
-  // radiusUnits: 'meters',
-  stroked: true,
-  
-  /* props inherited from Layer class */
-  
-  // autoHighlight: false,
-  // coordinateOrigin: [0, 0, 0],
-  // coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
-  // highlightColor: [0, 0, 128, 128],
-  // modelMatrix: null,
-  opacity: 0.8,
-  pickable: true,
-  // visible: true,
-  // wrapLongitude: false,
-  })
-  ];
-
-  new DeckGL({
-  mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-  initialViewState: {
-  longitude: -73.968379,
-  latitude: 40.799446,
-  zoom: 13,
-  maxZoom: 20,
-  pitch: 30,
-  bearing: 0
-  },
-  controller: true,
-  getTooltip: ({object}) => object && `${object.name}
-  ${object.address}`,
-  layers: layers
-  });
+    // console.log(colorscale(d.route_id))
+    return [color_rgb.r,color_rgb.g,color_rgb.b]},
+    // getLineColor: [0, 0, 0],
+    // getLineWidth: 1,
+    getPosition: d => d.COORDINATES,
+    getRadius: d => (d.total_entries)*1e-5,
+    // lineWidthMaxPixels: Number.MAX_SAFE_INTEGER,
+    lineWidthMinPixels: 1,
+    // lineWidthScale: 1,
+    // lineWidthUnits: 'meters',
+    radiusMaxPixels: 200,
+    radiusMinPixels: 1,
+    radiusScale: 15,
+    // radiusUnits: 'meters',
+    stroked: true,
+    
+    /* props inherited from Layer class */
+    
+    // autoHighlight: false,
+    // coordinateOrigin: [0, 0, 0],
+    // coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+    // highlightColor: [0, 0, 128, 128],
+    // modelMatrix: null,
+    opacity: 0.8,
+    pickable: true,
+    // visible: true,
+    // wrapLongitude: false,
+    })
+    ];
+    new DeckGL({
+    mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+    initialViewState: {
+    longitude: -73.924016,
+    latitude: 40.743781,
+    zoom: 10,
+    maxZoom: 20,
+    pitch: 0,
+    bearing: 0
+    },
+    controller: true,
+    getTooltip: ({object}) => object && `Stop Name: ${object.stop_name}
+    Total Entries: ${object.total_entries}
+    Total Exits: ${object.total_exits}
+    ${object.COORDINATES}`,
+    layers: layers
+    });
   }
   }
   // }
