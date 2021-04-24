@@ -50,7 +50,6 @@ def get_month_year_transit_data():
 
     return json.dumps(filtered_transit_data)
 
-
 @app.route('/cta/bus/daily/<date>')
 def cta_bus_daily(date):
     data = proc.load_cta_bus()

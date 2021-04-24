@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from pandas.plotting import autocorrelation_plot
 from statsmodels.tsa.arima.model import ARIMA
+from sklearn.metrics import mean_squared_error
 all_bike_data = proc.load_bike_full()
 
 filtered_df = all_bike_data[ (all_bike_data['year']==2019)&(all_bike_data['start_station']==3049)]
@@ -22,33 +23,26 @@ by_day = by_day.reset_index()
 series = by_day[['date','count']]
 
 series = series.set_index('date')
+series.index = series.index.to_period('D')
 
 X = series.values
-size = int(len(vals)*0.66)
+size = int(len(X)*0.66)
 train,test = X[:size],X[size:]
 history = [x for x in train]
 predictions = []
+for t in range(len(test)):
 
-model = ARIMA(series,order(7,1,0))
-model_fit = model.fit()
-print(model_fit.summary())
+    model = ARIMA(history,order=(7,1,0))
 
-# print(series)
-# series.plot()
-# plt.show()
-# autocorrelation_plot(series)
-# plt.show()
-    # rows = trip_pos.iloc[0]
-    # ts = rows['ts']
-    # print(trip_pos)
-
-    # by_month = trip_pos.groupby(['date']) \
-    #     .agg(
-    #         {
-    #             'ts':'first',
-    #             'start_station':'count'
-    #         }
-    #     )
-    # by_month.columns=['ts', 'count']
-    # by_month = by_month.reset_index()
-    # print(by_month)
+    model_fit = model.fit()
+    output = model_fit.forecast()
+    yhat = output[0]
+    predictions.append(yhat)
+    obs = test[t]
+    history.append(obs)
+    print('predicted=%f, expected=%f' % (yhat, obs))
+rmse = np.sqrt(mean_squared_error(test,predictions))
+print('Test RMSE: %.3f' % rmse)
+plt.plot(test)
+plt.plot(predictions, color='red')
+plt.show()
