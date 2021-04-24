@@ -105,30 +105,19 @@ def load_transit():
 
     return ridership
 
-def load_air_traffic():
-    name='data/air/flightlist_20190101_20190131.csv'
+def load_air_traffic(fil_name):
+    name='data/air/'+fil_name
     df = pd.read_csv(name)
 
-    df['firstseen'] = pd.to_datetime(df['firstseen'])
-    df['lastseen'] = pd.to_datetime(df['lastseen'])
     df['day'] = pd.to_datetime(df['day']).dt.date
 
-    airport_list = ['KBOS','KORH','KMHT','KPVD','KDCA','KIAD','KBWI','KJFK','KLGA','KEWR','KSFO','KSJC','KLAX','KSAN','KORD','KMDW']
-    #airport_list = ['KLAX']
+    df['month'] = pd.DatetimeIndex(df['day']).month
+    df['year'] = pd.DatetimeIndex(df['day']).year
 
-    filtered_df = df[df['origin'].isin(airport_list)]
-
-    filtered_df = filtered_df.dropna(subset=['destination'])
-
-    #filtered_df['month'] = pd.to_datetime(df['day']).dt.strftime('%b')
-    filtered_df['month'] = pd.DatetimeIndex(filtered_df['day']).month
-    filtered_df['year'] = pd.DatetimeIndex(filtered_df['day']).year
-
-    departures = filtered_df.groupby(['origin','destination','month','year']).agg({'origin':'count','latitude_1':'first','longitude_1':'first','latitude_2':'first','longitude_2':'first'})
+    departures = df.groupby(['origin','destination','month','year']).agg({'origin':'count','latitude_1':'first','longitude_1':'first','latitude_2':'first','longitude_2':'first'})
     departures.columns = ['count','latitude_1','longitude_1','latitude_2','longitude_2']
     departures = departures.reset_index()
 
-#   print(trip_pos)
     return departures
 
 def q33(x):
