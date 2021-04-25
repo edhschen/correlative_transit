@@ -66,16 +66,15 @@
 
     </div>
     <div>
-      <label>Count Filter</label>
-      <input id="count_filter" name="count_filter" type="range" min="0" max="100000" step="1" value="10"
+      <label>Filter Station Entries</label>
+      <input id="entries_filter" name="entries_filter" type="range" min="0" max="6000000" step="10000" value="100000"
         oninput="render()"></input>
-      <span id="count_filter_val"></span>
+      <span id="entries_filter_val"></span>
 
     </div>
 
     <select name="city" id="city" onchange="render()">
       <option value='New York'>New York</option>
-      <option value='San Francisco'>San Francisco</option>
     </select>
   </div>
   <div id="prediction">
@@ -117,8 +116,7 @@
     controller: true,
     getTooltip: ({ object }) => object && `Stop Name: ${object.stop_name}
     Total Entries: ${object.total_entries}
-    Total Exits: ${object.total_exits}
-    ${object.COORDINATES}`,
+    Total Exits: ${object.total_exits}`,
     layers: []
   });
 
@@ -126,7 +124,7 @@
     stop_name = $("#prediction_stop_name").val()
     daytime_routes = $("#prediction_daytime_routes").val()
     year = $("#year").val()
-    console.log(stop_name)
+    // console.log(stop_name)
     if (daytime_routes != -1) {
       $.ajax(
         {
@@ -158,7 +156,11 @@
   }
   function render() {
     var year = document.getElementById("year").value
+    $("#year_val").html(year)
     var month = document.getElementById("month").value
+    $("#month_val").html(month)
+    var entries_filter = document.getElementById("entries_filter").value
+    $("#entries_filter_val").html(entries_filter)
     var city = document.getElementById("city").value
 
     $.getJSON(
@@ -166,6 +168,7 @@
       {
         "month": month,
         'year': year,
+        'entries_filter': entries_filter,
         'city': city
       },
       function (data) {
@@ -173,7 +176,7 @@
       })
 
     function ready(data) {
-      console.log(data)
+      // console.log(data)
       const colorscale = d3.scaleOrdinal()
         .range(d3.schemePaired)
         // .range(d3.schemeCategory10)
@@ -256,8 +259,8 @@
         opacity: 0.5,
         pickable: true,
         onClick: (info, event) => {
-          console.log(info)
-          console.log(event)
+          // console.log(info)
+          // console.log(event)
           var obj = info.object
           var daytime_routes = obj.daytime_routes
           var station_name = obj.stop_name

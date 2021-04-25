@@ -80,14 +80,15 @@ def get_month_year_data():
 def get_month_year_transit_data():
     month = int(request.args.get('month'))
     year = int(request.args.get('year'))
+    entries_filter = int(request.args.get('entries_filter'))
     city = str(request.args.get('city'))
     if city == 'New York':
         if year == 2019:
-            filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2019, month, year)
+            filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2019, entries_filter, month, year)
         elif year == 2020:
-            filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2020, month, year)
+            filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2020, entries_filter, month, year)
         elif year == 2021:
-            filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2021, month, year)
+            filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2021, entries_filter, month, year)
 
     return json.dumps(filtered_transit_data)
 
