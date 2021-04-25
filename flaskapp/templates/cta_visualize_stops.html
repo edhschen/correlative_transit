@@ -21,12 +21,65 @@
         font-size: 10px;
       }
     </style>
+    <style type="text/css">
+      body {
+        margin: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+  
+      .deck-tooltip {
+        font-size: 0.8em;
+        font-family: Helvetica, Arial, sans-serif;
+      }
+  
+      #filter {
+        position: absolute;
+        top: 0;
+        left: 0;
+        margin: 12px;
+        padding: 20px;
+        font-size: 12px;
+        line-height: 1.5;
+        z-index: 1;
+        background: #fff;
+        font-family: Helvetica, Arial, sans-serif;
+        box-shadow: 0 0 4px rgba(0, 0, 0, 0.15);
+      }
+  
+      #prediction {
+        position: absolute;
+        z-index: 1;
+        right: 0;
+        top: 0;
+      }
+  
+      #prediction_loading {
+        display: None
+      }
+  
+      #prediction_fail {
+        display: None
+      }
+    </style>
   </head>
 
   <body>
     <label>Date?</label>
-    <input type="date" value="2016-01-06" onchange="updateDate(event)">
+    <input id="date" type="date" value="2019-01-06" onchange="updateDate(event)">
+
     <div id="map" style="width: 100vw; height: 100vh;"></div>
+    <div id="prediction">
+      <input type="hidden" id="prediction_daytime_routes" value="none"><br><br>
+      <input type="text" id="prediction_stop_name" value="" readonly><br><br>
+  
+      <button onclick="train_prediction_model()">Train and Visualize Prediction Model</button>
+      <h1 id="prediction_loading">Loading .....</h1>
+      <h1 id="prediction_fail">No Prediction For This Station</h1>
+  
+      <div id="prediction_img" width="400">
+      </div>
   </body>
 
   <script type="text/javascript">
@@ -44,8 +97,42 @@
         },
         controller: true,
         layers: [],
-        getTooltip
+        getTooltip,
+
       });
+  function train_prediction_model() {
+    stop_name = $("#prediction_stop_name").val()
+    daytime_routes = $("#prediction_daytime_routes").val()
+    year = $("#date").val().split("-")[0]
+    console.log(stop_name)
+    if (daytime_routes != -1) {
+      $.ajax(
+        {
+          method: 'GET',
+          url: `/cta/bus/prediction/${year}/${daytime_routes}`,
+          data: {
+            "stop_name": stop_name,
+            "daytime_routes":daytime_routes
+          },
+          beforeSend: d => {
+            $("#prediction_fail").hide()
+            $("#prediction_loading").show()
+            $("#prediction_img").html("")
+          },
+          success: function (data) {
+            if (data.documentElement) {
+              $("#prediction_loading").hide()
+              $("#prediction_img").html(data.documentElement)
+            } else {
+              $("#prediction_loading").hide()
+
+              $("#prediction_fail").show()
+            }
+          }
+        }
+      )
+    }
+  }
     function updateDate (e){
       var date = e.target.value.split("-")
       $.ajax({
@@ -103,7 +190,7 @@
     }
     $.ajax({
       type:"GET",
-      url: "/cta/bus/daily/01062016",
+      url: "/cta/bus/daily/01062019",
       dataType: "json",
       success: function(r){
         data = r
@@ -162,7 +249,19 @@
         getLineColor: d => getColorLine(data,d),
         updateTriggers:{
           getLineColor:data
-        }
+        },
+        onClick: (info, event) => {
+          console.log(info)
+          console.log(event)
+          var obj = info.object
+          var daytime_routes = obj.properties.ROUTE
+          var station_name = obj.properties.Name
+          // // debugger;
+          // var station_name = info.object.properties.name
+          $("#prediction_daytime_routes").val(daytime_routes)
+          $("#prediction_stop_name").val(station_name)
+
+        },
       });
       
       const railsstops = new GeoJsonLayer({
@@ -211,7 +310,6 @@
       return COLOR_SCALE[i] || COLOR_SCALE[COLOR_SCALE.length - 1];
     }
     function getTooltip({object}) {
-      // console.log(object)
       if (object && object.properties.hasOwnProperty("ROUTE")) {
       return `Route
         ${object.properties.ROUTE}

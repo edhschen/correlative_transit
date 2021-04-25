@@ -164,8 +164,8 @@ def load_transit(city='New York', year=2019):
     return ridership
 
 
-def get_month_year_transit_ridership_data(df, month='Jan', year=2019):
-    df_res = df[(df['month'] == month) & (df['year'] == year)]
+def get_month_year_transit_ridership_data(df, entries_filter, month='Jan', year=2019):
+    df_res = df[(df['month'] == month) & (df['year'] == year) & (df['total_entries'] >= entries_filter)]
 
     return json.loads(df_res.to_json(orient='records'))
 
@@ -240,6 +240,7 @@ def q66(x):
 def load_cta_bus():
     name = "data/cta/cta_bus_data.csv"
     df = pd.read_csv(name)
+    df["year"] = df["date"].str.split("/",expand=True)[2]
     gb = df.groupby("route")
     q = gb.agg({'rides': [q33, q66]})
     df = df.join(q, on='route', rsuffix='_r')

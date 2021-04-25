@@ -84,14 +84,15 @@ def get_month_year_data():
 def get_month_year_transit_data():
     month = int(request.args.get('month'))
     year = int(request.args.get('year'))
+    entries_filter = int(request.args.get('entries_filter'))
     city = str(request.args.get('city'))
     if city == 'New York':
         if year == 2019:
-            filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2019, month, year)
+            filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2019, entries_filter, month, year)
         elif year == 2020:
-            filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2020, month, year)
+            filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2020, entries_filter, month, year)
         elif year == 2021:
-            filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2021, month, year)
+            filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2021, entries_filter, month, year)
 
     return json.dumps(filtered_transit_data)
 
@@ -211,6 +212,24 @@ def air_traffic_plot_prediction(year):
         
         status, fig=ARIMA_predict_year_station(series,year,airport)
         print(status)
+        if status:
+            output = io.BytesIO()
+            FigureCanvasSVG(fig).print_svg(output)
+            return Response(output.getvalue(), mimetype="image/svg+xml")
+
+
+@app.route("/cta/bus/prediction/<year>/<route>")
+def cta_traffic_plot_pred(year, route):
+    if route != "none":
+        data = cta_bus[(cta_bus["year"] == year )& (cta_bus["route"] == route)]
+        
+        print(data)
+        data['date'] = pd.to_datetime(data['date'], format='%m/%d/%Y')
+        data = data.reset_index()
+        data = data[["date", "rides"]]
+        
+        
+        status, fig=ARIMA_predict_year_station(data,year,route)
         if status:
             output = io.BytesIO()
             FigureCanvasSVG(fig).print_svg(output)
