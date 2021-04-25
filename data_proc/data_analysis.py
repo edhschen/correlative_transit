@@ -7,19 +7,7 @@ from pandas.plotting import autocorrelation_plot
 from statsmodels.tsa.arima.model import ARIMA
 from sklearn.metrics import mean_squared_error
 
-def ARIMA_predict_year_station(data,year,station,station_name):
-    filtered_df = data[(data['year']==year) & (data['start_station']==station)]
-    by_day = filtered_df.groupby(['date']) \
-        .agg(
-            {
-                'ts':'first',
-                'start_station':'count'
-            }
-        )
-
-    by_day.columns=['ts', 'count']
-    by_day = by_day.reset_index()
-    series = by_day[['date','count']]
+def ARIMA_predict_year_station(series,year,station,station_name):
 
     series = series.set_index('date')
     labels = series.index
@@ -55,7 +43,7 @@ def ARIMA_predict_year_station(data,year,station,station_name):
         ax.set_title("ARIMA Model in Year %s at Station %s With Station ID: %s"%(year,station_name,station))
         ax.plot(labels,full_test,label="Ground Truth")
         ax.plot(labels,full_pridiction,label="Prediction")
-        ax.vlines([labels[size]],-10,2*np.max(full_test),color='r')
+        ax.vlines([labels[size]],-1,2*np.max(full_test),color='r')
         ax.legend()
         return True,fig
 

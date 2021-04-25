@@ -16,7 +16,7 @@ import io
 from matplotlib.backends.backend_svg import FigureCanvasSVG
 from matplotlib.figure import Figure
 import random
-from data_proc.bike_data_analysis import ARIMA_predict_year_station
+from data_proc.data_analysis import ARIMA_predict_year_station
 
 transit_data_2019 = proc.load_transit('New York', 2019)
 transit_data_2020 = proc.load_transit('New York', 2020)
@@ -63,7 +63,8 @@ def air():
 def get_month_year_data():
     month = int(request.args.get('month'))
     year = int(request.args.get('year'))
-    bike_data = proc.get_month_year_data(year, month, all_data)
+    count_filter = int(request.args.get('count_filter'))
+    bike_data = proc.get_month_year_data(year, month,count_filter, all_data)
 
     return json.dumps(bike_data)
 
@@ -105,10 +106,25 @@ def cta_bus_render():
 
 @app.route("/bike_prediction_<int:year>_<int:station>.svg")
 def plot_prediction(year,station):
+
+    
     print(year,station)
     if station!=-1:
+        filtered_df = all_bike_data[(all_bike_data['year']==year) & (all_bike_data['start_station']==station)]
+        by_day = filtered_df.groupby(['date']) \
+            .agg(
+                {
+                    'ts':'first',
+                    'start_station':'count'
+                }
+            )
+
+        by_day.columns=['ts', 'count']
+        by_day = by_day.reset_index()
+        series = by_day[['date','count']]
+        
         station_name = str(request.args.get('station_name'))
-        status, fig=ARIMA_predict_year_station(all_bike_data,year,station,station_name)
+        status, fig=ARIMA_predict_year_station(series,year,station,station_name)
         print(status)
         if status:
             
