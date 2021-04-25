@@ -66,6 +66,10 @@ def air():
         station_data = json.load(f)
     return render_template('air_traffic_vis.html', station_data=station_data)
 
+@app.route('/info')
+def info():
+    return render_template('info.html')
+
 @app.route('/get_month_year_data')
 def get_month_year_data():
     month = int(request.args.get('month'))
