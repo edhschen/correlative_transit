@@ -20,7 +20,7 @@
       padding: 6px !important;
       margin: 8px;
       max-width: 300px;
-      font-size: 10px;
+      font-size: 15px;
     }
 
     #filter {
@@ -36,40 +36,57 @@
       font-family: Helvetica, Arial, sans-serif;
       box-shadow: 0 0 4px rgba(0, 0, 0, 0.15);
     }
+
+    #prediction {
+      position: absolute;
+      z-index: 1;
+      right: 0;
+      top: 0;
+    }
+
+    #prediction_loading {
+      display: None
+    }
+
+    #prediction_fail {
+      display: None
+    }
   </style>
 </head>
 
 <body>
   <div id="tooltip"></div>
   <div id="filter">
-    <select name="year" id="year" onchange="render()">
-      <option value=2019>2019</option>
-      <option value=2020>2020</option>
-    </select>
-    <select name="month" id="month" onchange="render()">
-      <option value=1>Jan</option>
-      <option value=2>Feb</option>
-      <option value=3>Mar</option>
-      <option value=4>Apr</option>
-      <option value=5>May</option>
-      <option value=6>Jun</option>
-      <option value=7>Jul</option>
-      <option value=8>Aug</option>
-      <option value=9>Sep</option>
-      <option value=10>Oct</option>
-      <option value=11>Nov</option>
-      <option value=12>Dec</option>
-    </select>
+    <div>
+      <label>Year</label>
+      <input id="year" name="year" type="range" min="2019" max="2021" step="1" value="2019" oninput="render()"></input>
+      <span id="year_val"></span>
+    </div>
+    <div>
+      <label>Month</label>
+      <input id="month" name="month" type="range" min="1" max="12" step="1" value="1" oninput="render()"></input>
+      <span id="month_val"></span>
 
+    </div>
   </div>
+    <div id="prediction">
+    <!-- <input type="hidden" id="prediction_daytime_routes" value=-1><br><br>
+ -->    <input type="text" id="prediction_airport_id" value="" readonly><br><br>
+
+    <button onclick="train_prediction_model()">Train and Visualize Prediction Model</button>
+    <h1 id="prediction_loading">Loading .....</h1>
+    <h1 id="prediction_fail">No Prediction For This Station</h1>
+
+    <div id="prediction_img" width="400">
+    </div>
 </body>
 <script type="text/javascript">
   const { DeckGL, LineLayer, GeoJsonLayer, ArcLayer } = deck;
   deck_gl = new DeckGL({
         mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
         initialViewState: {
-          latitude: 34.0522,
-          longitude: -118.2437,
+          latitude: 37.7751,
+          longitude: -95.7129,
           zoom: 3,
           maxZoom: 16,
           pitch: 50,
@@ -78,13 +95,50 @@
         controller: true,
         layers: [],
         getTooltip: ({ object }) => {
-          return object && object.count && `Trip Count ${object.count} Source ${object.origin} Destination ${object.destination}`
+          return object && object.count && `Trip Count ${object.count} \n Origin ${object.origin} \n Destination ${object.destination}`
         }
       });
-  function render() {
-    var year = document.getElementById("year").value
 
-    var month = document.getElementById("month").value
+  function train_prediction_model() {
+    airport_id = $("#prediction_airport_id").val()
+    //station_id = $("#prediction_station_id").val()
+    year = $("#year").val()
+    console.log(airport_id)
+    if (airport_id != -1) {
+        $.ajax(
+          {
+            method: 'GET',
+            url: `/air_traffic_prediction_${year}.svg`,
+            data: {
+              "origin": airport_id,
+            },
+            beforeSend: d => {
+              $("#prediction_fail").hide()
+              $("#prediction_loading").show()
+              $("#prediction_img").html("")
+            },
+            success: function (data) {
+              if (data.documentElement) {
+                $("#prediction_loading").hide()
+                $("#prediction_img").html(data.documentElement)
+              } else {
+                $("#prediction_loading").hide()
+
+                $("#prediction_fail").show()
+              }
+            }
+          }
+        )
+        render()
+      }
+    }
+
+  function render() {
+    var prediction_airport_id = $("#prediction_airport_id").val()
+    var year = $("#year").val()
+    $("#year_val").html(year)
+    var month = $("#month").val()
+    $("#month_val").html(month)
 
     var data;
     $.getJSON(
@@ -119,7 +173,14 @@
         getTargetColor: d => [0, 0, 255],
         getWidth: d => {
           return d.count / 100
-        }
+        },
+        onClick: (info, event) => {
+          console.log(info)
+          var obj = info.object
+          var airport_id = obj.origin
+          console.log(airport_id)
+          $("#prediction_airport_id").val(airport_id)
+        },
       })
 
       station_geo = new GeoJsonLayer({
