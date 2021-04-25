@@ -135,3 +135,22 @@ def plot_prediction(year,station):
             return Response(output.getvalue(), mimetype="image/svg+xml")
         else:
             return "Fail"
+
+@app.route("/transit_prediction_<int:year>_<station>.svg")
+def transit_plot_prediction(year,station):
+
+    
+    print(year,station)
+    if station!=-1:
+        
+        # status, fig=ARIMA_predict_year_station(series,year,station,station_name)
+        # print(status)
+        status = True
+        fig = Figure()
+        if status:
+            
+            output = io.BytesIO()
+            FigureCanvasSVG(fig).print_svg(output)
+            return Response(output.getvalue(), mimetype="image/svg+xml")
+        else:
+            return "Fail"
