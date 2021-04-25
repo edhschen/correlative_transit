@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>deck.gl GeoJsonLayer (Polygon) Example</title>
+    <title>CTA BUS DATA</title>
 
     <script src="https://unpkg.com/deck.gl@^8.0.0/dist.min.js"></script>
     <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.4.0/mapbox-gl.js"></script>
@@ -37,6 +37,7 @@
       url: "/cta/bus/daily/"+date[1]+date[2]+date[0],
       dataType: "json",
       success: function(r){
+        data = r
         generateMap(r)
       }
     })
@@ -96,6 +97,7 @@
       url: "/cta/bus/daily/01062016",
       dataType: "json",
       success: function(r){
+        data = r
         generateMap(r)
       }
     })
@@ -219,10 +221,15 @@
     }
 
     function getTooltip({object}) {
-      return object && `Average Property Value
-        ${object.properties.valuePerSqm}
-        Growth
-        ${Math.round(object.properties.growth * 100)}`;
+      // console.log(object)
+      if (object && object.properties.hasOwnProperty("ROUTE")) {
+
+      return `Route
+        ${object.properties.ROUTE}
+        Usage
+        ${data[parseInt(object.properties.ROUTE)].rides}`;
+      }
+      
     }
 
   </script>
