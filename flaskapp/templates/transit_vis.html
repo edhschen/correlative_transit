@@ -79,8 +79,8 @@
     </select>
   </div>
   <div id="prediction">
-    <input type="hidden" id="prediction_station_id" value=-1><br><br>
-    <input type="text" id="prediction_station_name" value="" readonly><br><br>
+    <input type="hidden" id="prediction_daytime_routes" value=-1><br><br>
+    <input type="text" id="prediction_stop_name" value="" readonly><br><br>
 
     <button onclick="train_prediction_model()">Train and Visualize Prediction Model</button>
     <h1 id="prediction_loading">Loading .....</h1>
@@ -123,17 +123,18 @@
   });
 
   function train_prediction_model() {
-    station_name = $("#prediction_station_name").val()
-    station_id = $("#prediction_station_id").val()
+    stop_name = $("#prediction_stop_name").val()
+    daytime_routes = $("#prediction_daytime_routes").val()
     year = $("#year").val()
-    console.log(station_name)
-    if (station_id != -1) {
+    console.log(stop_name)
+    if (daytime_routes != -1) {
       $.ajax(
         {
           method: 'GET',
-          url: `/transit_prediction_${year}_${station_id}.svg`,
+          url: `/transit_prediction_${year}.svg`,
           data: {
-            "station_name": station_name,
+            "stop_name": stop_name,
+            "daytime_routes":daytime_routes
           },
           beforeSend: d => {
             $("#prediction_fail").hide()
@@ -258,12 +259,12 @@
           console.log(info)
           console.log(event)
           var obj = info.object
-          var station_id = 0
+          var daytime_routes = obj.daytime_routes
           var station_name = obj.stop_name
           // // debugger;
           // var station_name = info.object.properties.name
-          $("#prediction_station_id").val(station_id)
-          $("#prediction_station_name").val(station_name)
+          $("#prediction_daytime_routes").val(daytime_routes)
+          $("#prediction_stop_name").val(station_name)
 
         },
         // visible: true,
