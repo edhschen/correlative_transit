@@ -70,8 +70,7 @@
     </div>
   </div>
     <div id="prediction">
-    <!-- <input type="hidden" id="prediction_daytime_routes" value=-1><br><br>
- -->    <input type="text" id="prediction_airport_id" value="" readonly><br><br>
+    <input type="text" id="prediction_airport_id" value="" readonly><br><br>
 
     <button onclick="train_prediction_model()">Train and Visualize Prediction Model</button>
     <h1 id="prediction_loading">Loading .....</h1>
@@ -95,7 +94,7 @@
         controller: true,
         layers: [],
         getTooltip: ({ object }) => {
-          return object && object.count && `Trip Count ${object.count} \n Origin ${object.origin} \n Destination ${object.destination}`
+          return object && object.count && `Trip Count: ${object.count} \n Origin: ${object.origin} \n Destination: ${object.destination}`
         }
       });
 
@@ -151,8 +150,7 @@
         ready(d)
       })
     function ready(data) {
-      var station_data = JSON.parse('{{ station_data | tojson | safe }}')
-      trips_line = new ArcLayer({
+        trips_line = new ArcLayer({
         id: 'line',
         data: data,
         opacity: 0.8,
@@ -183,25 +181,9 @@
         },
       })
 
-      station_geo = new GeoJsonLayer({
-        id: "station_geo",
-        data: station_data,
-        pickable: true,
-        stroked: false,
-        filled: true,
-        extruded: true,
-        lineWidthScale: 20,
-        lineWidthMinPixels: 2,
-        getFillColor: [160, 160, 180, 200],
-        getLineColor: [0, 255, 0],
-        getRadius: 30,
-        getLineWidth: 1,
-        getElevation: 30,
-      });
-
       deck_gl.setProps(
       {
-        layers: [trips_line, station_geo]
+        layers: [trips_line]
       }
     )
 
