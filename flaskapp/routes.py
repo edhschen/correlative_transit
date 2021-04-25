@@ -30,8 +30,10 @@ all_data = proc.load_bike()
 all_bike_data = proc.load_bike_full()
 cta_bus = proc.load_cta_bus()
 
-# air_data_2019 = proc.load_air_traffic('flightdata_2019.csv')
-# air_data_2020 = proc.load_air_traffic('flightdata_2020.csv')
+air_data_2019 = proc.load_air_traffic('flightdata_2019.csv')
+air_data_2020 = proc.load_air_traffic('flightdata_2020.csv')
+air_data_2019_full = proc.load_air_traffic_full('flightdata_2019.csv')
+air_data_2020_full = proc.load_air_traffic_full('flightdata_2020.csv')
 
 # The following two lines define two routes for the Flask app, one for just
 # '/', which is the default route for a host, and one for '/index', which is
@@ -94,9 +96,11 @@ def get_month_year_air_traffic_data():
     month = int(request.args.get('month'))
     year = int(request.args.get('year'))
     if year==2019:
-        filtered_air_data = proc.get_month_year_data(year, month, air_data_2019)
+        filtered_air_data = proc.get_month_year_air_traffic_data(year, month, air_data_2019)
     elif year==2020:
-        filtered_air_data = proc.get_month_year_data(year, month, air_data_2020)
+        filtered_air_data = proc.get_month_year_air_traffic_data(year, month, air_data_2020)
+    else:
+        filtered_air_data = 0
     return json.dumps(filtered_air_data)
 
 @app.route('/cta/bus/daily/<date>')
@@ -175,6 +179,35 @@ def transit_plot_prediction(year):
         # fig = Figure()
         if status:
             
+            output = io.BytesIO()
+            FigureCanvasSVG(fig).print_svg(output)
+            return Response(output.getvalue(), mimetype="image/svg+xml")
+        else:
+            return "Fail"
+
+@app.route("/air_traffic_prediction_<int:year>.svg")
+def air_traffic_plot_prediction(year):
+
+    airport = request.args.get('origin')
+    print('airport ID = ',airport)
+
+    if airport!=-1:
+        if year==2019:
+            filtered_df = air_data_2019_full[air_data_2019_full['origin']==airport]
+        elif year==2020:
+            filtered_df = air_data_2020_full[air_data_2020_full['origin']==airport]
+
+        df_day = filtered_df.groupby(['date']).agg({'origin':'count'})
+
+        print(df_day)
+
+        df_day.columns=['count']
+        df_day = df_day.reset_index()
+        series = df_day[['date','count']]
+        
+        status, fig=ARIMA_predict_year_station(series,year,airport)
+        print(status)
+        if status:
             output = io.BytesIO()
             FigureCanvasSVG(fig).print_svg(output)
             return Response(output.getvalue(), mimetype="image/svg+xml")

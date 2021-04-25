@@ -195,12 +195,21 @@ def load_transit_all(city='New York', year=2019):
 
     return ridership
 
+def get_month_year_air_traffic_data(year, month, df):
+    df_res = df[(df['month'] == month) & (df['year'] == year)]
+
+    return json.loads(df_res.to_json(orient='records'))
+
 
 def load_air_traffic(fil_name):
     name = 'data/air/' + fil_name
     df = pd.read_csv(name)
 
-    df['day'] = pd.to_datetime(df['day']).dt.date
+    df['date'] = pd.to_datetime(df['day'])
+    df['latitude_1'] = df['latitude_1'].round(decimals=3)
+    df['latitude_2'] = df['latitude_2'].round(decimals=3)
+    df['longitude_1'] = df['longitude_1'].round(decimals=3)
+    df['longitude_2'] = df['longitude_2'].round(decimals=3)
 
     df['month'] = pd.DatetimeIndex(df['day']).month
     df['year'] = pd.DatetimeIndex(df['day']).year
@@ -213,6 +222,12 @@ def load_air_traffic(fil_name):
 
     return departures
 
+def load_air_traffic_full(fil_name):
+    name = 'data/air/' + fil_name
+    df = pd.read_csv(name)
+    df['date'] = pd.to_datetime(df['day'])
+
+    return df
 
 def q33(x):
     return x.quantile(0.33)
