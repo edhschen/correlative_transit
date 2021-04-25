@@ -1,229 +1,240 @@
 <html>
-  <head>
-    <title>deck.gl GeoJsonLayer (Polygon) Example</title>
 
-    <script src="https://unpkg.com/deck.gl@^8.0.0/dist.min.js"></script>
-    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.4.0/mapbox-gl.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<head>
+  <title>deck.gl GeoJsonLayer (Polygon) Example</title>
 
-    <style type="text/css">
-      body {
-        width: 100vw;
-        height: 100vh;
-        margin: 0;
-        overflow: hidden;
-      }
-      .deck-tooltip {
-        font-family: Helvetica, Arial, sans-serif;
-        padding: 6px !important;
-        margin: 8px;
-        max-width: 300px;
-        font-size: 10px;
-      }
-    </style>
-  </head>
+  <script src="https://unpkg.com/deck.gl@^8.0.0/dist.min.js"></script>
+  <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.4.0/mapbox-gl.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
-  <body>
-    <label>Date?</label>
-    <input type="date" value="2016-01-06" onchange="updateDate(event)">
-    <div id="map" style="width: 100vw; height: 100vh;"></div>
-  </body>
-
-  <script type="text/javascript">
-    function updateDate (e){
-      var date = e.target.value.split("-")
-      $.ajax({
-      type:"GET",
-      url: "/cta/bus/daily/"+date[1]+date[2]+date[0],
-      dataType: "json",
-      success: function(r){
-        generateMap(r)
-      }
-    })
+  <style type="text/css">
+    body {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
     }
-    function getColorLine(data, d) {
-      // console.log(d)
-      // console.log(data)
-      var route = d.properties.ROUTE
-      if (route in data){
-        var val = data[route]
-        // console.log(val.rides, val.q33, val)
 
-        if (val.rides  < val.q33){
-          return [0,255,0]
-        }
-        if (val.rides  < val.q66){
-          return [255,255,0]
-        }
-        return [255,0,0]
-      }
-      else {
-        return [200,200,200]
-      }
+    .deck-tooltip {
+      font-family: Helvetica, Arial, sans-serif;
+      padding: 6px !important;
+      margin: 8px;
+      max-width: 300px;
+      font-size: 10px;
     }
-    function quantileSorted(values, p, fnValueFrom) {
-      var n = values.length;
-      if (!n) {
-        return;
-      }
+  </style>
+</head>
 
-      fnValueFrom =
-        Object.prototype.toString.call(fnValueFrom) == "[object Function]"
-          ? fnValueFrom
-          : function (x) {
-              return x;
-            };
+<body>
+  <label>Date?</label>
+  <input type="date" value="2016-01-06" onchange="updateDate(event)">
+  <div id="map" style="width: 100vw; height: 100vh;"></div>
+</body>
 
-      p = +p;
+<script type="text/javascript">
+  const { DeckGL, GeoJsonLayer } = deck;
 
-      if (p <= 0 || n < 2) {
-        return +fnValueFrom(values[0], 0, values);
-      }
-
-      if (p >= 1) {
-        return +fnValueFrom(values[n - 1], n - 1, values);
-      }
-
-      var i = (n - 1) * p,
-        i0 = Math.floor(i),
-        value0 = +fnValueFrom(values[i0], i0, values),
-        value1 = +fnValueFrom(values[i0 + 1], i0 + 1, values);
-
-      return value0 + (value1 - value0) * (i - i0);
-    }
+  var deck_gl = new DeckGL({
+    container: "map",
+    mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+    initialViewState: {
+      latitude: 41.8781,
+      longitude: -87.629,
+      zoom: 9,
+      maxZoom: 16,
+      pitch: 45
+    },
+    controller: true,
+    layers: [],
+    getTooltip
+  });
+  function updateDate(e) {
+    var date = e.target.value.split("-")
     $.ajax({
-      type:"GET",
-      url: "/cta/bus/daily/01062016",
+      type: "GET",
+      url: "/cta/bus/daily/" + date[1] + date[2] + date[0],
       dataType: "json",
-      success: function(r){
+      success: function (r) {
         generateMap(r)
       }
     })
-    function generateMap(data){
-    
-      const {DeckGL, GeoJsonLayer} = deck;
+  }
+  function getColorLine(data, d) {
+    // console.log(d)
+    // console.log(data)
+    var route = d.properties.ROUTE
+    if (route in data) {
+      var val = data[route]
+      // console.log(val.rides, val.q33, val)
 
-      const COLOR_SCALE = [
-        // negative
-        [65, 182, 196],
-        [127, 205, 187],
-        [199, 233, 180],
-        [237, 248, 177],
-
-        // positive
-        [255, 255, 204],
-        [255, 237, 160],
-        [254, 217, 118],
-        [254, 178, 76],
-        [253, 141, 60],
-        [252, 78, 42],
-        [227, 26, 28],
-        [189, 0, 38],
-        [128, 0, 38]
-      ];
-      // console.log(data)
-      const railsLayer = new GeoJsonLayer({
-        id:"raillines",
-        data: '/static/geojson/CTA_RailLines.geojson',
-        pickable: true,
-        stroked: false,
-        filled: true,
-        extruded: true,
-        lineWidthScale: 20,
-        lineWidthMinPixels: 2,
-        getFillColor: [160, 160, 180, 200],
-        getLineColor: [255,0,0],
-        getRadius: 100,
-        getLineWidth: 1,
-        getElevation: 30,
-
-      });
-      const busLayer = new GeoJsonLayer({
-        id:"busroutes",
-        data: '/static/geojson/CTA_BusRoutes.geojson',
-        pickable: true,
-        stroked: false,
-        filled: true,
-        extruded: true,
-        lineWidthScale: 20,
-        lineWidthMinPixels: 2,
-        // getFillColor: [160, 160, 180, 200],
-        // getLineColor: [0,255,0],
-        getRadius: 100,
-        getLineWidth: 1,
-        getElevation: 30,
-        getLineColor: d => getColorLine(data,d),
-
-      });
-      
-      const railsstops = new GeoJsonLayer({
-        id:"railsstops",
-        data: '/static/geojson/CTA_RailStations.geojson',
-        pickable: true,
-        stroked: false,
-        filled: true,
-        extruded: true,
-        lineWidthScale: 20,
-        lineWidthMinPixels: 2,
-        // getFillColor: [160, 160, 180, 200],
-        getFillColor: [150,0,0, 300],
-        getLineColor: [150,0,0],
-        getRadius: 70,
-        getLineWidth: 1,
-        getElevation: 30,
-
-      });
-      const busstops = new GeoJsonLayer({
-        id:"busstops",
-        data: '/static/geojson/CTA_BusStops.geojson',
-        pickable: true,
-        stroked: false,
-        filled: true,
-        extruded: true,
-        lineWidthScale: 20,
-        lineWidthMinPixels: 2,
-        // getFillColor: [160, 160, 180, 200],
-        getFillColor: [0,150,0, 300],
-        getLineColor: [0,150,0],
-        getRadius: 30,
-        getLineWidth: 1,
-        getElevation: 30,
-        // getFillColor: d => {console.log(d);return [0,150,0, 300]}
-
-      });
-
-
-      new DeckGL({
-        container: "map",
-        mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-        initialViewState: {
-          latitude: 41.8781,
-          longitude: -87.629,
-          zoom: 9,
-          maxZoom: 16,
-          pitch: 45
-        },
-        controller: true,
-        layers: [ busLayer, busstops],
-        getTooltip
-      });
-    
-    }
-
-    function colorScale(x) {
-      const i = Math.round(x * 7) + 4;
-      if (x < 0) {
-        return COLOR_SCALE[i] || COLOR_SCALE[0];
+      if (val.rides < val.q33) {
+        return [0, 255, 0]
       }
-      return COLOR_SCALE[i] || COLOR_SCALE[COLOR_SCALE.length - 1];
+      if (val.rides < val.q66) {
+        return [255, 255, 0]
+      }
+      return [255, 0, 0]
+    }
+    else {
+      return [200, 200, 200]
+    }
+  }
+  function quantileSorted(values, p, fnValueFrom) {
+    var n = values.length;
+    if (!n) {
+      return;
     }
 
-    function getTooltip({object}) {
-      return object && `Average Property Value
+    fnValueFrom =
+      Object.prototype.toString.call(fnValueFrom) == "[object Function]"
+        ? fnValueFrom
+        : function (x) {
+          return x;
+        };
+
+    p = +p;
+
+    if (p <= 0 || n < 2) {
+      return +fnValueFrom(values[0], 0, values);
+    }
+
+    if (p >= 1) {
+      return +fnValueFrom(values[n - 1], n - 1, values);
+    }
+
+    var i = (n - 1) * p,
+      i0 = Math.floor(i),
+      value0 = +fnValueFrom(values[i0], i0, values),
+      value1 = +fnValueFrom(values[i0 + 1], i0 + 1, values);
+
+    return value0 + (value1 - value0) * (i - i0);
+  }
+  $.ajax({
+    type: "GET",
+    url: "/cta/bus/daily/01062016",
+    dataType: "json",
+    success: function (r) {
+      generateMap(r)
+    }
+  })
+  function generateMap(data) {
+
+
+    const COLOR_SCALE = [
+      // negative
+      [65, 182, 196],
+      [127, 205, 187],
+      [199, 233, 180],
+      [237, 248, 177],
+
+      // positive
+      [255, 255, 204],
+      [255, 237, 160],
+      [254, 217, 118],
+      [254, 178, 76],
+      [253, 141, 60],
+      [252, 78, 42],
+      [227, 26, 28],
+      [189, 0, 38],
+      [128, 0, 38]
+    ];
+    // console.log(data)
+    var railsLayer = new GeoJsonLayer({
+      id: "raillines",
+      data: '/static/geojson/CTA_RailLines.geojson',
+      pickable: true,
+      stroked: false,
+      filled: true,
+      extruded: true,
+      lineWidthScale: 20,
+      lineWidthMinPixels: 2,
+      getFillColor: [160, 160, 180, 200],
+      getLineColor: [255, 0, 0],
+      getRadius: 100,
+      getLineWidth: 1,
+      getElevation: 30,
+
+    });
+    var busLayer = new GeoJsonLayer({
+      id: "busroutes",
+      data: '/static/geojson/CTA_BusRoutes.geojson',
+      pickable: true,
+      stroked: false,
+      filled: true,
+      extruded: true,
+      lineWidthScale: 20,
+      lineWidthMinPixels: 2,
+      // getFillColor: [160, 160, 180, 200],
+      // getLineColor: [0,255,0],
+      getRadius: 100,
+      getLineWidth: 1,
+      getElevation: 30,
+      getLineColor: d => getColorLine(data, d),
+      updateTriggers:{
+        getLineColor:data
+      }
+    });
+
+    var railsstops = new GeoJsonLayer({
+      id: "railsstops",
+      data: '/static/geojson/CTA_RailStations.geojson',
+      pickable: true,
+      stroked: false,
+      filled: true,
+      extruded: true,
+      lineWidthScale: 20,
+      lineWidthMinPixels: 2,
+      // getFillColor: [160, 160, 180, 200],
+      getFillColor: [150, 0, 0, 300],
+      getLineColor: [150, 0, 0],
+      getRadius: 70,
+      getLineWidth: 1,
+      getElevation: 30,
+
+    });
+    var busstops = new GeoJsonLayer({
+      id: "busstops",
+      data: '/static/geojson/CTA_BusStops.geojson',
+      pickable: true,
+      stroked: false,
+      filled: true,
+      extruded: true,
+      lineWidthScale: 20,
+      lineWidthMinPixels: 2,
+      // getFillColor: [160, 160, 180, 200],
+      getFillColor: [0, 150, 0, 300],
+      getLineColor: [0, 150, 0],
+      getRadius: 30,
+      getLineWidth: 1,
+      getElevation: 30,
+      
+      // getFillColor: d => {console.log(d);return [0,150,0, 300]}
+
+    });
+
+    deck_gl.setProps(
+      {
+        layers: [busLayer, busstops]
+      }
+    )
+
+  }
+
+  function colorScale(x) {
+    const i = Math.round(x * 7) + 4;
+    if (x < 0) {
+      return COLOR_SCALE[i] || COLOR_SCALE[0];
+    }
+    return COLOR_SCALE[i] || COLOR_SCALE[COLOR_SCALE.length - 1];
+  }
+
+  function getTooltip({ object }) {
+    return object && `Average Property Value
         ${object.properties.valuePerSqm}
         Growth
         ${Math.round(object.properties.growth * 100)}`;
-    }
+  }
 
-  </script>
+</script>
+
 </html>
