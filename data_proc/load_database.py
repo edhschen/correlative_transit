@@ -1,35 +1,38 @@
-
 from datetime import datetime
 
 import pandas as pd
 import json
+
+
 def load_bike():
     name = "data/concate_data.csv"
     df = pd.read_csv(name)
     df['start_time'] = pd.to_datetime(df['start_time'])
     df['end_time'] = pd.to_datetime(df['end_time'])
 
-    trip_pos = df[["start_station","end_station","start_time","start_lat","start_lon","end_lat","end_lon","trip_route_category"]]
+    trip_pos = df[["start_station", "end_station", "start_time", "start_lat", "start_lon", "end_lat", "end_lon",
+                   "trip_route_category"]]
 
-    trip_pos = trip_pos[trip_pos.trip_route_category=="One Way"]
+    trip_pos = trip_pos[trip_pos.trip_route_category == "One Way"]
     trip_pos = trip_pos.dropna(how='any')
     trip_pos['month'] = pd.DatetimeIndex(trip_pos['start_time']).month
     trip_pos['year'] = pd.DatetimeIndex(trip_pos['start_time']).year
 
-    trip_pos = trip_pos.groupby(['start_station',"end_station","month","year"]) \
-    .agg(
+    trip_pos = trip_pos.groupby(['start_station', "end_station", "month", "year"]) \
+        .agg(
         {
-            'start_station':"count",
-            'start_lat':"mean",
-            'start_lon':"mean",
-            'end_lat':"mean",
-            'end_lon':"mean",
+            'start_station': "count",
+            'start_lat': "mean",
+            'start_lon': "mean",
+            'end_lat': "mean",
+            'end_lon': "mean",
         }
     )
-    trip_pos.columns = ['count','start_lat','start_lon','end_lat','end_lon']
+    trip_pos.columns = ['count', 'start_lat', 'start_lon', 'end_lat', 'end_lon']
     trip_pos = trip_pos.reset_index()
 
     return trip_pos
+
 
 def load_bike_full():
     name = "data/concate_data.csv"
@@ -37,9 +40,10 @@ def load_bike_full():
     df['start_time'] = pd.to_datetime(df['start_time'])
     df['end_time'] = pd.to_datetime(df['end_time'])
 
-    trip_pos = df[["start_station","end_station","start_time","start_lat","start_lon","end_lat","end_lon","trip_route_category"]]
+    trip_pos = df[["start_station", "end_station", "start_time", "start_lat", "start_lon", "end_lat", "end_lon",
+                   "trip_route_category"]]
 
-    trip_pos = trip_pos[trip_pos.trip_route_category=="One Way"]
+    trip_pos = trip_pos[trip_pos.trip_route_category == "One Way"]
     trip_pos = trip_pos.dropna(how='any')
     trip_pos['date'] = trip_pos['start_time'].dt.normalize()
     trip_pos['ts'] = trip_pos['date'].astype('int64')
@@ -65,8 +69,10 @@ def load_bike_full():
     # print(by_month)
 
     return trip_pos
-def get_month_year_data(year,month,count_filter,df):
-    df_res = df[(df['month']==month) & (df['year'] == year)&(df['count']>=count_filter)]
+
+
+def get_month_year_data(year, month, count_filter, df):
+    df_res = df[(df['month'] == month) & (df['year'] == year) & (df['count'] >= count_filter)]
 
     return json.loads(df_res.to_json(orient='records'))
 
@@ -96,7 +102,8 @@ def load_transit_gtfs(city='New York'):
     })
     n.reset_index()
     # print(n.info())
-    o = n[['route_id', 'stop_id']].merge(df_stops[['stop_id', 'stop_name', 'stop_lat', 'stop_lon']], on='stop_id', how='inner', sort=True)
+    o = n[['route_id', 'stop_id']].merge(df_stops[['stop_id', 'stop_name', 'stop_lat', 'stop_lon']], on='stop_id',
+                                         how='inner', sort=True)
     o.reset_index()
     o["COORDINATES"] = o[["stop_lon", "stop_lat"]].values.tolist()
     o.reset_index()
@@ -123,8 +130,9 @@ def load_transit(city='New York', year=2019):
 
     df_ridership['date'] = pd.to_datetime(df_ridership['date'])
 
-    ridership = df_ridership[["stop_name", "daytime_routes", "division", "line", "borough", "structure", "gtfs_longitude",
-                    "gtfs_latitude", "complex_id", "date", "entries", "exits"]]
+    ridership = df_ridership[
+        ["stop_name", "daytime_routes", "division", "line", "borough", "structure", "gtfs_longitude",
+         "gtfs_latitude", "complex_id", "date", "entries", "exits"]]
     # print(ridership.dtypes)
 
     ridership = ridership.dropna(how='any')
@@ -162,8 +170,34 @@ def get_month_year_transit_ridership_data(df, month='Jan', year=2019):
     return json.loads(df_res.to_json(orient='records'))
 
 
+def load_transit_all(city='New York', year=2019):
+    data = 'data/transit/body_' + str(year) + '.csv'
+
+    df_ridership = pd.read_csv(data)
+    df_ridership['date'] = pd.to_datetime(df_ridership['date'])
+
+    ridership = df_ridership[
+        ["stop_name", "daytime_routes", "division", "line", "borough", "structure", "gtfs_longitude",
+         "gtfs_latitude", "complex_id", "date", "entries", "exits"]]
+    # print(ridership.dtypes)
+
+    ridership = ridership.dropna(how='any')
+    ridership['date'] = ridership['date'].dt.normalize()
+
+    ridership['month'] = pd.DatetimeIndex(ridership['date']).month
+    ridership['year'] = pd.DatetimeIndex(ridership['date']).year
+    ridership['day'] = pd.DatetimeIndex(ridership['date']).day
+    ridership['dayofweek'] = pd.DatetimeIndex(ridership['date']).dayofweek
+    # print(ridership.info())
+
+    ridership = ridership.drop(["division", "line", "borough", "structure", 'gtfs_longitude', 'gtfs_latitude'], 1)
+    # print(ridership.head(50))
+
+    return ridership
+
+
 def load_air_traffic(fil_name):
-    name='data/air/'+fil_name
+    name = 'data/air/' + fil_name
     df = pd.read_csv(name)
 
     df['day'] = pd.to_datetime(df['day']).dt.date
@@ -171,29 +205,38 @@ def load_air_traffic(fil_name):
     df['month'] = pd.DatetimeIndex(df['day']).month
     df['year'] = pd.DatetimeIndex(df['day']).year
 
-    departures = df.groupby(['origin','destination','month','year']).agg({'origin':'count','latitude_1':'first','longitude_1':'first','latitude_2':'first','longitude_2':'first'})
-    departures.columns = ['count','latitude_1','longitude_1','latitude_2','longitude_2']
+    departures = df.groupby(['origin', 'destination', 'month', 'year']).agg(
+        {'origin': 'count', 'latitude_1': 'first', 'longitude_1': 'first', 'latitude_2': 'first',
+         'longitude_2': 'first'})
+    departures.columns = ['count', 'latitude_1', 'longitude_1', 'latitude_2', 'longitude_2']
     departures = departures.reset_index()
 
     return departures
 
+
 def q33(x):
     return x.quantile(0.33)
+
+
 def q66(x):
     return x.quantile(0.66)
+
+
 def load_cta_bus():
-    name="data/cta/cta_bus_data.csv"
+    name = "data/cta/cta_bus_data.csv"
     df = pd.read_csv(name)
     gb = df.groupby("route")
     q = gb.agg({'rides': [q33, q66]})
     df = df.join(q, on='route', rsuffix='_r')
     df["q33"] = df[("rides", "q33")]
     df["q66"] = df[("rides", "q66")]
-    df = df.drop([("rides", "q33"), ("rides", "q66")],axis=1)
+    df = df.drop([("rides", "q33"), ("rides", "q66")], axis=1)
     return df
+
 
 if __name__ == '__main__':
     # transit_data = load_transit()
     # print(transit_data)
-    transit_data = load_transit()
+    # transit_data = load_transit()
     # print(transit_data)
+    transit_data_all = load_transit_all()

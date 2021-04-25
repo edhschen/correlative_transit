@@ -7,7 +7,7 @@ from pandas.plotting import autocorrelation_plot
 from statsmodels.tsa.arima.model import ARIMA
 from sklearn.metrics import mean_squared_error
 
-def ARIMA_predict_year_station(series,year,station,station_name):
+def ARIMA_predict_year_station(series,year,station_name):
 
     series = series.set_index('date')
     labels = series.index
@@ -40,7 +40,7 @@ def ARIMA_predict_year_station(series,year,station,station_name):
         full_test = X
         full_pridiction = np.concatenate([train,np.array(predictions)[:,np.newaxis]])
         fig,ax = plt.subplots()
-        ax.set_title("ARIMA Model in Year %s at Station %s With Station ID: %s"%(year,station_name,station))
+        ax.set_title("ARIMA Model in Year %s at Station %s "%(year,station_name))
         ax.plot(labels,full_test,label="Ground Truth")
         ax.plot(labels,full_pridiction,label="Prediction")
         ax.vlines([labels[size]],-1,2*np.max(full_test),color='r')

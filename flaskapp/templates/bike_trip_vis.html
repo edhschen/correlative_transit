@@ -47,10 +47,10 @@
     #prediction_loading {
       display: None
     }
+
     #prediction_fail {
       display: None
     }
-    
   </style>
 
 </head>
@@ -71,7 +71,8 @@
     </div>
     <div>
       <label>Count Filter</label>
-      <input id="count_filter" name="count_filter" type="range" min="0" max="100" step="1" value="10" oninput="render()"></input>
+      <input id="count_filter" name="count_filter" type="range" min="0" max="100" step="1" value="10"
+        oninput="render()"></input>
       <span id="count_filter_val"></span>
 
     </div>
@@ -93,39 +94,39 @@
 <script type="text/javascript">
   const { DeckGL, LineLayer, GeoJsonLayer, ArcLayer } = deck;
   var deckgl = new DeckGL({
-        mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-        initialViewState: {
-          latitude: 34.0522,
-          longitude: -118.2437,
-          zoom: 12,
-          maxZoom: 16,
-          pitch: 50,
-          bearing: 0
-        },
-        controller: true,
-        layers: [],
-        getTooltip: ({ object }) => {
-          if (object) {
-            console.log(object)
-            if (object.count) {
-              var str = `Trip Count ${object.count}\n From Station: ${object.start_station}\n To Station: ${object.end_station}\n`
+    mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+    initialViewState: {
+      latitude: 34.0522,
+      longitude: -118.2437,
+      zoom: 12,
+      maxZoom: 16,
+      pitch: 50,
+      bearing: 0
+    },
+    controller: true,
+    layers: [],
+    getTooltip: ({ object }) => {
+      if (object) {
+        console.log(object)
+        if (object.count) {
+          var str = `Trip Count ${object.count}\n From Station: ${object.start_station}\n To Station: ${object.end_station}\n`
 
-              return str
-            } else if (object.properties.kioskId) {
-              console.log("dsafasf")
-              var str = `Station Name: ${object.properties.name}\n Station Id: ${object.properties.kioskId}\n`
-              return str
-            } 
-          }
-        },
+          return str
+        } else if (object.properties.kioskId) {
+          console.log("dsafasf")
+          var str = `Station Name: ${object.properties.name}\n Station Id: ${object.properties.kioskId}\n`
+          return str
+        }
+      }
+    },
 
-      });
+  });
   function train_prediction_model() {
     station_name = $("#prediction_station_name").val()
     station_id = $("#prediction_station_id").val()
     year = $("#year").val()
     console.log(station_name)
-    if (station_id!=-1){
+    if (station_id != -1) {
       $.ajax(
         {
           method: 'GET',
@@ -139,10 +140,10 @@
             $("#prediction_img").html("")
           },
           success: function (data) {
-            if (data.documentElement){
+            if (data.documentElement) {
               $("#prediction_loading").hide()
               $("#prediction_img").html(data.documentElement)
-            }else{
+            } else {
               $("#prediction_loading").hide()
 
               $("#prediction_fail").show()
@@ -168,7 +169,7 @@
       {
         "month": month,
         'year': year,
-        'count_filter':count_filter
+        'count_filter': count_filter
       },
       function (d) {
         ready(d)
@@ -237,16 +238,16 @@
           $("#prediction_station_name").val(station_name)
 
         },
-        
+
       })
-      
+
       deckgl.setProps(
         {
-          layers:[trips_line,station_geo]
+          layers: [trips_line, station_geo]
         }
       )
 
-      ;
+        ;
     }
   }
 

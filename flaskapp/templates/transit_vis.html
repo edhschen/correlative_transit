@@ -1,187 +1,287 @@
 <html>
-  <head>
-    <title>deck.gl LineLayer Example</title>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-    <script src="https://unpkg.com/deck.gl@^8.0.0/dist.min.js"></script>
-    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.4.0/mapbox-gl.js"></script>
-    <!-- <script type="text/javascript" src="vis_data/2020_q4_all_trips.json"></script> -->
-    <script src="https://d3js.org/d3.v5.min.js"></script>
-    <style type="text/css">
-    
+
+<head>
+  <title>deck.gl LineLayer Example</title>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="https://unpkg.com/deck.gl@^8.0.0/dist.min.js"></script>
+  <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.4.0/mapbox-gl.js"></script>
+  <!-- <script type="text/javascript" src="vis_data/2020_q4_all_trips.json"></script> -->
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <style type="text/css">
     body {
-    margin: 0;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
+      margin: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
     }
-    
+
     .deck-tooltip {
-    font-size: 0.8em;
-    font-family: Helvetica, Arial, sans-serif;
+      font-size: 0.8em;
+      font-family: Helvetica, Arial, sans-serif;
     }
+
     #filter {
-    position: absolute;
-    top: 0;
-    left: 0;
-    margin: 12px;
-    padding: 20px;
-    font-size: 12px;
-    line-height: 1.5;
-    z-index: 1;
-    background: #fff;
-    font-family: Helvetica, Arial, sans-serif;
-    box-shadow: 0 0 4px rgba(0, 0, 0, 0.15);
+      position: absolute;
+      top: 0;
+      left: 0;
+      margin: 12px;
+      padding: 20px;
+      font-size: 12px;
+      line-height: 1.5;
+      z-index: 1;
+      background: #fff;
+      font-family: Helvetica, Arial, sans-serif;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.15);
     }
-    </style>
-  </head>
-  <body>
-    <div id="tooltip"></div>
-    <div id="filter">
-      <select name="year" id="year" onchange="render()">
-        <option value=2019>2019</option>
-        <option value=2020>2020</option>
-        <option value=2021>2021</option>
-      </select>
-      <select name="month" id="month" onchange="render()">
-        <option value=1>Jan</option>
-        <option value=2>Feb</option>
-        <option value=3>Mar</option>
-        <option value=4>Apr</option>
-        <option value=5>May</option>
-        <option value=6>Jun</option>
-        <option value=7>Jul</option>
-        <option value=8>Aug</option>
-        <option value=9>Sep</option>
-        <option value=10>Oct</option>
-        <option value=11>Nov</option>
-        <option value=12>Dec</option>
-      </select>
+
+    #prediction {
+      position: absolute;
+      z-index: 1;
+      right: 0;
+      top: 0;
+    }
+
+    #prediction_loading {
+      display: None
+    }
+
+    #prediction_fail {
+      display: None
+    }
+  </style>
+</head>
+
+<body>
+  <div id="tooltip"></div>
+  <div id="filter">
+    <div>
+      <label>Year</label>
+      <input id="year" name="year" type="range" min="2019" max="2021" step="1" value="2019" oninput="render()"></input>
+      <span id="year_val"></span>
     </div>
-  </body>
-  <script type="text/javascript">
+    <div>
+      <label>Month</label>
+      <input id="month" name="month" type="range" min="1" max="12" step="1" value="1" oninput="render()"></input>
+      <span id="month_val"></span>
+
+    </div>
+    <div>
+      <label>Count Filter</label>
+      <input id="count_filter" name="count_filter" type="range" min="0" max="100000" step="1" value="10"
+        oninput="render()"></input>
+      <span id="count_filter_val"></span>
+
+    </div>
+
+    <select name="city" id="city" onchange="render()">
+      <option value='New York'>New York</option>
+      <option value='San Francisco'>San Francisco</option>
+    </select>
+  </div>
+  <div id="prediction">
+    <input type="hidden" id="prediction_daytime_routes" value=-1><br><br>
+    <input type="text" id="prediction_stop_name" value="" readonly><br><br>
+
+    <button onclick="train_prediction_model()">Train and Visualize Prediction Model</button>
+    <h1 id="prediction_loading">Loading .....</h1>
+    <h1 id="prediction_fail">No Prediction For This Station</h1>
+
+    <div id="prediction_img" width="400">
+    </div>
+</body>
+<script type="text/javascript">
   /*
   * https://deck.gl/docs/api-reference/layers/scatterplot-layer
   */
-  const {DeckGL, ScatterplotLayer} = deck;
-  function render(){
-  var year = document.getElementById("year").value
-  var month = document.getElementById("month").value
-    
-  $.getJSON(
-  '/get_month_year_transit_data',
-  {
-  "month": month,
-  'year': year
-  },
-  function (data) {
-  ready(data)
-  })
+  const { DeckGL, ScatterplotLayer } = deck;
 
-  function ready(data) {
-    console.log(data)
-    const colorscale = d3.scaleOrdinal()
-    .range(d3.schemePaired)
-    // .range(d3.schemeCategory10)
-    .domain(data.map(function (d){
-    // console.log(d)
-    return d.daytime_routes}));
-    // const layer = new ScatterplotLayer({
-    // id: 'ScatterplotLayer',
-    // data: 'https://ankit-kaul.github.io/data/stop_list.json',
-    
-    // /* props from ScatterplotLayer class */
-    
-    // // filled: true,
-    // getFillColor: [255, 140, 0],
-    // // getFillColor:   d => {
-    // // // console.log(colorscale(d.route_id))
-    // // return colorscale(d.route_id)},
-    // getLineColor: [0, 0, 0],
-    // // getLineWidth: 1,
-    // getPosition: d => d.COORDINATES,
-    // getRadius: d => Math.sqrt(d.exits),
-    // // lineWidthMaxPixels: Number.MAX_SAFE_INTEGER,
-    // lineWidthMinPixels: 1,
-    // // lineWidthScale: 1,
-    // // lineWidthUnits: 'meters',
-    // radiusMaxPixels: 200,
-    // radiusMinPixels: 1,
-    // radiusScale: 15,
-    // // radiusUnits: 'meters',
-    // stroked: true,
-    
-    // /* props inherited from Layer class */
-    
-    // // autoHighlight: false,
-    // // coordinateOrigin: [0, 0, 0],
-    // // coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
-    // // highlightColor: [0, 0, 128, 128],
-    // // modelMatrix: null,
-    // opacity: 0.8,
-    // pickable: true,
-    // // visible: true,
-    // // wrapLongitude: false,
-    // });
-    const layers = [ new ScatterplotLayer({
-    id: 'ScatterplotLayer',
-    data: data,
-    
-    /* props from ScatterplotLayer class */
-    
-    // filled: true,
-    // getFillColor: [255, 140, 0],
-    getFillColor:   d => {
-    var color = colorscale(d.daytime_routes)
-    var color_rgb = d3.rgb(color)
-    // console.log(colorscale(d.route_id))
-    return [color_rgb.r,color_rgb.g,color_rgb.b]},
-    // getLineColor: [0, 0, 0],
-    // getLineWidth: 1,
-    getPosition: d => d.COORDINATES,
-    getRadius: d => (d.total_entries)*1e-5,
-    // lineWidthMaxPixels: Number.MAX_SAFE_INTEGER,
-    lineWidthMinPixels: 1,
-    // lineWidthScale: 1,
-    // lineWidthUnits: 'meters',
-    radiusMaxPixels: 200,
-    radiusMinPixels: 1,
-    radiusScale: 50,
-    // radiusUnits: 'meters',
-    stroked: true,
-    
-    /* props inherited from Layer class */
-    
-    // autoHighlight: false,
-    // coordinateOrigin: [0, 0, 0],
-    // coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
-    // highlightColor: [0, 0, 128, 128],
-    // modelMatrix: null,
-    opacity: 0.5,
-    pickable: true,
-    // visible: true,
-    // wrapLongitude: false,
-    })
-    ];
-    new DeckGL({
+  // Data
+  const CITIES = [
+    { "city": "San Francisco", "state": "California", "latitude": 37.7751, "longitude": -122.4193 },
+    { "city": "New York", "state": "New York", "latitude": 40.743781, "longitude": -73.924016 },
+    { "city": "Los Angeles", "state": "California", "latitude": 34.051597, "longitude": -118.244263 },
+    { "city": "London", "state": "United Kingdom", "latitude": 51.5074, "longitude": -0.1278 },
+    { "city": "Hyderabad", "state": "India", "latitude": 17.3850, "longitude": 78.4867 }
+  ];
+
+  var deckgl = new DeckGL({
     mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
     initialViewState: {
-    longitude: -73.924016,
-    latitude: 40.743781,
-    zoom: 10,
-    maxZoom: 20,
-    pitch: 0,
-    bearing: 0
+      longitude: CITIES[1].longitude,
+      latitude: CITIES[1].latitude,
+      zoom: 10,
+      maxZoom: 20,
+      pitch: 0,
+      bearing: 0
     },
     controller: true,
-    getTooltip: ({object}) => object && `Stop Name: ${object.stop_name}
+    getTooltip: ({ object }) => object && `Stop Name: ${object.stop_name}
     Total Entries: ${object.total_entries}
     Total Exits: ${object.total_exits}
     ${object.COORDINATES}`,
-    layers: layers
-    });
+    layers: []
+  });
+
+  function train_prediction_model() {
+    stop_name = $("#prediction_stop_name").val()
+    daytime_routes = $("#prediction_daytime_routes").val()
+    year = $("#year").val()
+    console.log(stop_name)
+    if (daytime_routes != -1) {
+      $.ajax(
+        {
+          method: 'GET',
+          url: `/transit_prediction_${year}.svg`,
+          data: {
+            "stop_name": stop_name,
+            "daytime_routes":daytime_routes
+          },
+          beforeSend: d => {
+            $("#prediction_fail").hide()
+            $("#prediction_loading").show()
+            $("#prediction_img").html("")
+          },
+          success: function (data) {
+            if (data.documentElement) {
+              $("#prediction_loading").hide()
+              $("#prediction_img").html(data.documentElement)
+            } else {
+              $("#prediction_loading").hide()
+
+              $("#prediction_fail").show()
+            }
+          }
+        }
+      )
+      render()
+    }
   }
+  function render() {
+    var year = document.getElementById("year").value
+    var month = document.getElementById("month").value
+    var city = document.getElementById("city").value
+
+    $.getJSON(
+      '/get_month_year_transit_data',
+      {
+        "month": month,
+        'year': year,
+        'city': city
+      },
+      function (data) {
+        ready(data)
+      })
+
+    function ready(data) {
+      console.log(data)
+      const colorscale = d3.scaleOrdinal()
+        .range(d3.schemePaired)
+        // .range(d3.schemeCategory10)
+        .domain(data.map(function (d) {
+          // console.log(d)
+          return d.daytime_routes
+        }));
+      // const layer = new ScatterplotLayer({
+      // id: 'ScatterplotLayer',
+      // data: 'https://ankit-kaul.github.io/data/stop_list.json',
+
+      // /* props from ScatterplotLayer class */
+
+      // // filled: true,
+      // getFillColor: [255, 140, 0],
+      // // getFillColor:   d => {
+      // // // console.log(colorscale(d.route_id))
+      // // return colorscale(d.route_id)},
+      // getLineColor: [0, 0, 0],
+      // // getLineWidth: 1,
+      // getPosition: d => d.COORDINATES,
+      // getRadius: d => Math.sqrt(d.exits),
+      // // lineWidthMaxPixels: Number.MAX_SAFE_INTEGER,
+      // lineWidthMinPixels: 1,
+      // // lineWidthScale: 1,
+      // // lineWidthUnits: 'meters',
+      // radiusMaxPixels: 200,
+      // radiusMinPixels: 1,
+      // radiusScale: 15,
+      // // radiusUnits: 'meters',
+      // stroked: true,
+
+      // /* props inherited from Layer class */
+
+      // // autoHighlight: false,
+      // // coordinateOrigin: [0, 0, 0],
+      // // coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+      // // highlightColor: [0, 0, 128, 128],
+      // // modelMatrix: null,
+      // opacity: 0.8,
+      // pickable: true,
+      // // visible: true,
+      // // wrapLongitude: false,
+      // });
+      const scat_plot_layer = [new ScatterplotLayer({
+        id: 'ScatterplotLayer',
+        data: data,
+
+        /* props from ScatterplotLayer class */
+
+        // filled: true,
+        // getFillColor: [255, 140, 0],
+        getFillColor: d => {
+          var color = colorscale(d.daytime_routes)
+          var color_rgb = d3.rgb(color)
+          // console.log(colorscale(d.route_id))
+          return [color_rgb.r, color_rgb.g, color_rgb.b]
+        },
+        // getLineColor: [0, 0, 0],
+        // getLineWidth: 1,
+        getPosition: d => d.COORDINATES,
+        getRadius: d => (d.total_entries) * 1e-5,
+        // lineWidthMaxPixels: Number.MAX_SAFE_INTEGER,
+        lineWidthMinPixels: 1,
+        // lineWidthScale: 1,
+        // lineWidthUnits: 'meters',
+        radiusMaxPixels: 200,
+        radiusMinPixels: 1,
+        radiusScale: 50,
+        // radiusUnits: 'meters',
+        stroked: true,
+
+        /* props inherited from Layer class */
+
+        // autoHighlight: false,
+        // coordinateOrigin: [0, 0, 0],
+        // coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+        // highlightColor: [0, 0, 128, 128],
+        // modelMatrix: null,
+        opacity: 0.5,
+        pickable: true,
+        onClick: (info, event) => {
+          console.log(info)
+          console.log(event)
+          var obj = info.object
+          var daytime_routes = obj.daytime_routes
+          var station_name = obj.stop_name
+          // // debugger;
+          // var station_name = info.object.properties.name
+          $("#prediction_daytime_routes").val(daytime_routes)
+          $("#prediction_stop_name").val(station_name)
+
+        },
+        // visible: true,
+        // wrapLongitude: false,
+      })
+      ];
+
+      deckgl.setProps(
+        {
+          layers: [scat_plot_layer]
+        }
+      )
+
+    }
   }
   // }
   render()
-  </script>
+</script>
+
 </html>

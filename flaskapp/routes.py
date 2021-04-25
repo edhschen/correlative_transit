@@ -21,6 +21,11 @@ from data_proc.data_analysis import ARIMA_predict_year_station
 transit_data_2019 = proc.load_transit('New York', 2019)
 transit_data_2020 = proc.load_transit('New York', 2020)
 transit_data_2021 = proc.load_transit('New York', 2021)
+
+transit_data_2019_full = proc.load_transit_all('New York', 2019)
+transit_data_2020_full = proc.load_transit_all('New York', 2020)
+transit_data_2021_full = proc.load_transit_all('New York', 2021)
+
 all_data = proc.load_bike()
 all_bike_data = proc.load_bike_full()
 cta_bus = proc.load_cta_bus()
@@ -73,12 +78,14 @@ def get_month_year_data():
 def get_month_year_transit_data():
     month = int(request.args.get('month'))
     year = int(request.args.get('year'))
-    if year == 2019:
-        filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2019, month, year)
-    elif year == 2020:
-        filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2020, month, year)
-    elif year == 2021:
-        filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2021, month, year)
+    city = str(request.args.get('city'))
+    if city == 'New York':
+        if year == 2019:
+            filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2019, month, year)
+        elif year == 2020:
+            filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2020, month, year)
+        elif year == 2021:
+            filtered_transit_data = proc.get_month_year_transit_ridership_data(transit_data_2021, month, year)
 
     return json.dumps(filtered_transit_data)
 
@@ -124,8 +131,48 @@ def plot_prediction(year,station):
         series = by_day[['date','count']]
         
         station_name = str(request.args.get('station_name'))
-        status, fig=ARIMA_predict_year_station(series,year,station,station_name)
+        status, fig=ARIMA_predict_year_station(series,year,station_name)
         print(status)
+        if status:
+            
+            output = io.BytesIO()
+            FigureCanvasSVG(fig).print_svg(output)
+            return Response(output.getvalue(), mimetype="image/svg+xml")
+        else:
+            return "Fail"
+
+@app.route("/transit_prediction_<int:year>.svg")
+def transit_plot_prediction(year):
+
+    stop_name = (request.args.get('stop_name'))
+    daytime_routes = (request.args.get('daytime_routes'))
+
+    print(stop_name,daytime_routes)
+    if daytime_routes!=-1:
+        if year == 2019:
+            filtered_df = transit_data_2019_full[(transit_data_2019_full['stop_name']==stop_name)&(transit_data_2019_full['daytime_routes']==daytime_routes)]
+        elif year == 2020:
+            filtered_df = transit_data_2020_full[(transit_data_2020_full['stop_name']==stop_name)&(transit_data_2020_full['daytime_routes']==daytime_routes)]
+        else:
+            filtered_df = transit_data_2021_full[(transit_data_2021_full['stop_name']==stop_name)&(transit_data_2021_full['daytime_routes']==daytime_routes)]
+        # print(filtered_df.head())
+
+        by_day = filtered_df.groupby(['date']) \
+            .agg(
+                {
+                    'entries':'sum'
+                    # 'total_exits':'sum'
+                }
+            )
+
+        by_day.columns=['count']
+        by_day = by_day.reset_index()
+        series = by_day[['date','count']]
+        # print(series.head())
+        status, fig=ARIMA_predict_year_station(series,year,stop_name)
+        # print(status)
+        # status = True
+        # fig = Figure()
         if status:
             
             output = io.BytesIO()
