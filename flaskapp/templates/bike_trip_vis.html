@@ -58,25 +58,25 @@
 <body>
   <div id="tooltip"></div>
   <div id="filter">
-    <select name="year" id="year" onchange="render()">
-      <option value=2019>2019</option>
-      <option value=2020>2020</option>
-    </select>
-    <select name="month" id="month" onchange="render()">
-      <option value=1>Jan</option>
-      <option value=2>Feb</option>
-      <option value=3>Mar</option>
-      <option value=4>Apr</option>
-      <option value=5>May</option>
-      <option value=6>Jun</option>
-      <option value=7>Jul</option>
-      <option value=8>Aug</option>
-      <option value=9>Sep</option>
-      <option value=10>Oct</option>
-      <option value=11>Nov</option>
-      <option value=12>Dec</option>
-    </select>
-  </div>
+    <div>
+      <label>Year</label>
+      <input id="year" name="year" type="range" min="2019" max="2021" step="1" value="2019" onchange="render()"></input>
+      <span id="year_val"></span>
+    </div>
+    <div>
+      <label>Month</label>
+      <input id="month" name="month" type="range" min="1" max="12" step="1" value="1" onchange="render()"></input>
+      <span id="month_val"></span>
+
+    </div>
+    <div>
+      <label>Count Filter</label>
+      <input id="count_filter" name="count_filter" type="range" min="0" max="100" step="1" value="10" onchange="render()"></input>
+      <span id="count_filter_val"></span>
+
+    </div>
+
+  </div><br></br>
 
   <div id="prediction">
     <input type="hidden" id="prediction_station_id" value=-1><br><br>
@@ -129,15 +129,19 @@
   function render() {
     var prediction_station = $("#prediction_station_id").val()
     var year = $("#year").val()
-
+    $("#year_val").html(year)
     var month = $("#month").val()
+    $("#month_val").html(month)
+    var count_filter = $('#count_filter').val()
+    $("#count_filter_val").html(count_filter)
 
     var data;
     $.getJSON(
       '/get_month_year_data',
       {
         "month": month,
-        'year': year
+        'year': year,
+        'count_filter':count_filter
       },
       function (d) {
         ready(d)

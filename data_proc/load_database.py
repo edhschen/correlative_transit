@@ -65,8 +65,8 @@ def load_bike_full():
     # print(by_month)
 
     return trip_pos
-def get_month_year_data(year,month,df):
-    df_res = df[(df['month']==month) & (df['year'] == year)]
+def get_month_year_data(year,month,count_filter,df):
+    df_res = df[(df['month']==month) & (df['year'] == year)&(df['count']>=count_filter)]
 
     return json.loads(df_res.to_json(orient='records'))
 
