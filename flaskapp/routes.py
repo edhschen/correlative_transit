@@ -211,5 +211,23 @@ def air_traffic_plot_prediction(year):
             output = io.BytesIO()
             FigureCanvasSVG(fig).print_svg(output)
             return Response(output.getvalue(), mimetype="image/svg+xml")
+
+
+@app.route("/cta/bus/prediction/<year>/<route>")
+def cta_traffic_plot_pred(year, route):
+    if route != "none":
+        data = cta_bus[(cta_bus["year"] == year )& (cta_bus["route"] == route)]
+        
+        print(data)
+        data['date'] = pd.to_datetime(data['date'], format='%m/%d/%Y')
+        data = data.reset_index()
+        data = data[["date", "rides"]]
+        
+        
+        status, fig=ARIMA_predict_year_station(data,year,route)
+        if status:
+            output = io.BytesIO()
+            FigureCanvasSVG(fig).print_svg(output)
+            return Response(output.getvalue(), mimetype="image/svg+xml")
         else:
             return "Fail"
