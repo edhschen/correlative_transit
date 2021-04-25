@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>deck.gl GeoJsonLayer (Polygon) Example</title>
+    <title>CTA BUS DATA</title>
 
     <script src="https://unpkg.com/deck.gl@^8.0.0/dist.min.js"></script>
     <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.4.0/mapbox-gl.js"></script>
@@ -30,6 +30,22 @@
   </body>
 
   <script type="text/javascript">
+      const {DeckGL, GeoJsonLayer} = deck;
+
+      deck_gl =  new DeckGL({
+        container: "map",
+        mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+        initialViewState: {
+          latitude: 41.8781,
+          longitude: -87.629,
+          zoom: 9,
+          maxZoom: 16,
+          pitch: 45
+        },
+        controller: true,
+        layers: [],
+        getTooltip
+      });
     function updateDate (e){
       var date = e.target.value.split("-")
       $.ajax({
@@ -37,6 +53,7 @@
       url: "/cta/bus/daily/"+date[1]+date[2]+date[0],
       dataType: "json",
       success: function(r){
+        data = r
         generateMap(r)
       }
     })
@@ -48,7 +65,6 @@
       if (route in data){
         var val = data[route]
         // console.log(val.rides, val.q33, val)
-
         if (val.rides  < val.q33){
           return [0,255,0]
         }
@@ -66,29 +82,23 @@
       if (!n) {
         return;
       }
-
       fnValueFrom =
         Object.prototype.toString.call(fnValueFrom) == "[object Function]"
           ? fnValueFrom
           : function (x) {
               return x;
             };
-
       p = +p;
-
       if (p <= 0 || n < 2) {
         return +fnValueFrom(values[0], 0, values);
       }
-
       if (p >= 1) {
         return +fnValueFrom(values[n - 1], n - 1, values);
       }
-
       var i = (n - 1) * p,
         i0 = Math.floor(i),
         value0 = +fnValueFrom(values[i0], i0, values),
         value1 = +fnValueFrom(values[i0 + 1], i0 + 1, values);
-
       return value0 + (value1 - value0) * (i - i0);
     }
     $.ajax({
@@ -96,20 +106,18 @@
       url: "/cta/bus/daily/01062016",
       dataType: "json",
       success: function(r){
+        data = r
         generateMap(r)
       }
     })
     function generateMap(data){
     
-      const {DeckGL, GeoJsonLayer} = deck;
-
       const COLOR_SCALE = [
         // negative
         [65, 182, 196],
         [127, 205, 187],
         [199, 233, 180],
         [237, 248, 177],
-
         // positive
         [255, 255, 204],
         [255, 237, 160],
@@ -136,7 +144,6 @@
         getRadius: 100,
         getLineWidth: 1,
         getElevation: 30,
-
       });
       const busLayer = new GeoJsonLayer({
         id:"busroutes",
@@ -153,7 +160,9 @@
         getLineWidth: 1,
         getElevation: 30,
         getLineColor: d => getColorLine(data,d),
-
+        updateTriggers:{
+          getLineColor:data
+        }
       });
       
       const railsstops = new GeoJsonLayer({
@@ -171,7 +180,6 @@
         getRadius: 70,
         getLineWidth: 1,
         getElevation: 30,
-
       });
       const busstops = new GeoJsonLayer({
         id:"busstops",
@@ -189,27 +197,12 @@
         getLineWidth: 1,
         getElevation: 30,
         // getFillColor: d => {console.log(d);return [0,150,0, 300]}
-
       });
 
-
-      new DeckGL({
-        container: "map",
-        mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-        initialViewState: {
-          latitude: 41.8781,
-          longitude: -87.629,
-          zoom: 9,
-          maxZoom: 16,
-          pitch: 45
-        },
-        controller: true,
-        layers: [ busLayer, busstops],
-        getTooltip
-      });
-    
+      deck_gl.setProps({
+        layers:[busLayer,busstops]
+      })
     }
-
     function colorScale(x) {
       const i = Math.round(x * 7) + 4;
       if (x < 0) {
@@ -217,13 +210,15 @@
       }
       return COLOR_SCALE[i] || COLOR_SCALE[COLOR_SCALE.length - 1];
     }
-
     function getTooltip({object}) {
-      return object && `Average Property Value
-        ${object.properties.valuePerSqm}
-        Growth
-        ${Math.round(object.properties.growth * 100)}`;
+      // console.log(object)
+      if (object && object.properties.hasOwnProperty("ROUTE")) {
+      return `Route
+        ${object.properties.ROUTE}
+        Usage
+        ${data[parseInt(object.properties.ROUTE)].rides}`;
+      }
+      
     }
-
   </script>
 </html>

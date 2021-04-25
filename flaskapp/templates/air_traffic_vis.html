@@ -65,7 +65,22 @@
 </body>
 <script type="text/javascript">
   const { DeckGL, LineLayer, GeoJsonLayer, ArcLayer } = deck;
-
+  deck_gl = new DeckGL({
+        mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+        initialViewState: {
+          latitude: 34.0522,
+          longitude: -118.2437,
+          zoom: 3,
+          maxZoom: 16,
+          pitch: 50,
+          bearing: 0
+        },
+        controller: true,
+        layers: [],
+        getTooltip: ({ object }) => {
+          return object && object.count && `Trip Count ${object.count} Source ${object.origin} Destination ${object.destination}`
+        }
+      });
   function render() {
     var year = document.getElementById("year").value
 
@@ -123,22 +138,12 @@
         getElevation: 30,
       });
 
-      new DeckGL({
-        mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-        initialViewState: {
-          latitude: 34.0522,
-          longitude: -118.2437,
-          zoom: 3,
-          maxZoom: 16,
-          pitch: 50,
-          bearing: 0
-        },
-        controller: true,
-        layers: [station_geo, trips_line],
-        getTooltip: ({ object }) => {
-          return object && object.count && `Trip Count ${object.count} Source ${object.origin} Destination ${object.destination}`
-        }
-      });
+      deck_gl.setProps(
+      {
+        layers: [trips_line, station_geo]
+      }
+    )
+
     }
   }
 
