@@ -5,6 +5,7 @@
     <script src="https://unpkg.com/deck.gl@^8.0.0/dist.min.js"></script>
     <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.4.0/mapbox-gl.js"></script>
     <!-- <script type="text/javascript" src="vis_data/2020_q4_all_trips.json"></script> -->
+    <script src="https://d3js.org/d3.v5.min.js"></script>
     <style type="text/css">
     
     body {
@@ -39,6 +40,7 @@
       <select name="year" id="year" onchange="render()">
         <option value=2019>2019</option>
         <option value=2020>2020</option>
+        <option value=2021>2021</option>
       </select>
       <select name="month" id="month" onchange="render()">
         <option value=1>Jan</option>
@@ -58,61 +60,125 @@
   </body>
   <script type="text/javascript">
   /*
-  * https://deck.gl/docs/api-reference/aggregation-layers/heatmap-layer#properties
+  * https://deck.gl/docs/api-reference/layers/scatterplot-layer
   */
-  const {DeckGL, HeatmapLayer} = deck;
+  const {DeckGL, ScatterplotLayer} = deck;
   function render(){
   var year = document.getElementById("year").value
   var month = document.getElementById("month").value
-  var data;
+    
   $.getJSON(
   '/get_month_year_transit_data',
   {
   "month": month,
   'year': year
   },
-  function (d) {
-  ready(d)
+  function (data) {
+  ready(data)
   })
+
   function ready(data) {
-  console.log(data)
-  const layer = new HeatmapLayer({
-  id: 'HeatmapLayer',
-  data: 'https://ankit-kaul.github.io/data/stop_list.json',
-  /* props from HeatmapLayer class */
-  // aggregation: 'SUM',
-  // colorDomain: null,
-  // colorRange: [[255, 255, 178], [254, 217, 118], [254, 178, 76], [253, 141, 60], [240, 59, 32], [189, 0, 38]],
-  getPosition: d => d.COORDINATES,
-  // getWeight: 1,
-  // intensity: 1,
-  radiusPixels: 25,
-  // threshold: 0.05,
-  /* props inherited from Layer class */
-  // autoHighlight: false,
-  // coordinateOrigin: [0, 0, 0],
-  // coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
-  // highlightColor: [0, 0, 128, 128],
-  // modelMatrix: null,
-  // opacity: 1,
-  // pickable: false,
-  // visible: true,
-  // wrapLongitude: false,
-  });
-  new DeckGL({
-  mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-  initialViewState: {
-  longitude: -73.968379,
-  latitude: 40.799446,
-  zoom: 11,
-  maxZoom: 20,
-  pitch: 30,
-  bearing: 0
-  },
-  controller: true,
-  
-  layers: [layer]
-  });
+    console.log(data)
+    const colorscale = d3.scaleOrdinal()
+    .range(d3.schemePaired)
+    // .range(d3.schemeCategory10)
+    .domain(data.map(function (d){
+    // console.log(d)
+    return d.daytime_routes}));
+    // const layer = new ScatterplotLayer({
+    // id: 'ScatterplotLayer',
+    // data: 'https://ankit-kaul.github.io/data/stop_list.json',
+    
+    // /* props from ScatterplotLayer class */
+    
+    // // filled: true,
+    // getFillColor: [255, 140, 0],
+    // // getFillColor:   d => {
+    // // // console.log(colorscale(d.route_id))
+    // // return colorscale(d.route_id)},
+    // getLineColor: [0, 0, 0],
+    // // getLineWidth: 1,
+    // getPosition: d => d.COORDINATES,
+    // getRadius: d => Math.sqrt(d.exits),
+    // // lineWidthMaxPixels: Number.MAX_SAFE_INTEGER,
+    // lineWidthMinPixels: 1,
+    // // lineWidthScale: 1,
+    // // lineWidthUnits: 'meters',
+    // radiusMaxPixels: 200,
+    // radiusMinPixels: 1,
+    // radiusScale: 15,
+    // // radiusUnits: 'meters',
+    // stroked: true,
+    
+    // /* props inherited from Layer class */
+    
+    // // autoHighlight: false,
+    // // coordinateOrigin: [0, 0, 0],
+    // // coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+    // // highlightColor: [0, 0, 128, 128],
+    // // modelMatrix: null,
+    // opacity: 0.8,
+    // pickable: true,
+    // // visible: true,
+    // // wrapLongitude: false,
+    // });
+    const layers = [ new ScatterplotLayer({
+    id: 'ScatterplotLayer',
+    data: data,
+    
+    /* props from ScatterplotLayer class */
+    
+    // filled: true,
+    // getFillColor: [255, 140, 0],
+    getFillColor:   d => {
+    var color = colorscale(d.daytime_routes)
+    var color_rgb = d3.rgb(color)
+    // console.log(colorscale(d.route_id))
+    return [color_rgb.r,color_rgb.g,color_rgb.b]},
+    // getLineColor: [0, 0, 0],
+    // getLineWidth: 1,
+    getPosition: d => d.COORDINATES,
+    getRadius: d => (d.total_entries)*1e-5,
+    // lineWidthMaxPixels: Number.MAX_SAFE_INTEGER,
+    lineWidthMinPixels: 1,
+    // lineWidthScale: 1,
+    // lineWidthUnits: 'meters',
+    radiusMaxPixels: 200,
+    radiusMinPixels: 1,
+    radiusScale: 50,
+    // radiusUnits: 'meters',
+    stroked: true,
+    
+    /* props inherited from Layer class */
+    
+    // autoHighlight: false,
+    // coordinateOrigin: [0, 0, 0],
+    // coordinateSystem: COORDINATE_SYSTEM.LNGLAT,
+    // highlightColor: [0, 0, 128, 128],
+    // modelMatrix: null,
+    opacity: 0.5,
+    pickable: true,
+    // visible: true,
+    // wrapLongitude: false,
+    })
+    ];
+    new DeckGL({
+    mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+    initialViewState: {
+    longitude: -73.924016,
+    latitude: 40.743781,
+    zoom: 10,
+    maxZoom: 20,
+    pitch: 0,
+    bearing: 0
+    },
+    controller: true,
+    getTooltip: ({object}) => object && `Stop Name: ${object.stop_name}
+    Total Entries: ${object.total_entries}
+    Total Exits: ${object.total_exits}
+    ${object.COORDINATES}`,
+    layers: layers
+    });
   }
   }
   // }
