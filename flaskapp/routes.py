@@ -53,7 +53,7 @@ def get_month_year_transit_data():
 
 @app.route('/cta/bus/daily/<date>')
 def cta_bus_daily(date):
-    data = proc.load_cta_bus()
+    data = cta_bus
     print(type(data))
     date = date[:2] + "/" + date[2:4] + "/" + date[4:]
     print(cta_bus)
@@ -64,5 +64,5 @@ def cta_bus_daily(date):
     return json.dumps(data)
 
 @app.route('/cta/bus')
-def cta_bus():
+def cta_bus_page():
     return render_template("cta_visualize_stops.html")
