@@ -1,11 +1,14 @@
 
 import data_proc.load_database as proc
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 from pandas.plotting import autocorrelation_plot
 from statsmodels.tsa.arima.model import ARIMA
 from sklearn.metrics import mean_squared_error
+
+matplotlib.use('agg')
 
 def ARIMA_predict_year_station(series,year,station_name):
 

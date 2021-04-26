@@ -15,8 +15,20 @@
 <body>
 
     <div id = "container"></div>
-    <script src = "/templates/js/network.js"></script>
-    <script src = "/templates/js/chord.js"></script>
-    <script src = "/templates/js/heatmap.js"></script>
+    <div>
+        <label>Minimum Ridership</label>
+        <input id="ridership" name="ridership" type="range" min="500" max="3000" step="100" value="2000" onchange="updateLabel(this.value);"></input>
+        <span id="ridership_val">2000</span>
+    </div>
+    <div id="network"></div>
+    <script>
+        function updateLabel(val) {
+            console.log(document.getElementById('ridership_val'))
+            document.getElementById('ridership_val').innerHTML=val; 
+        }
+    </script>
+    <script src = "/static/js/network.js"></script>
+    <script src = "/static/js/chord.js"></script>
+    <script src = "/static/js/heatmap.js"></script>    
 </body>
 </html>

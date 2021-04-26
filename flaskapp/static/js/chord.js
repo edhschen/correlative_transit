@@ -75,7 +75,7 @@ svg.attr("display", "none");
 //   console.log(data)
 // });
 
-d3.text("bart/entry_exit_bart2.21_aggregated.csv").then(function(text) {
+d3.text("static/bart/entry_exit_bart2.21_aggregated.csv").then(function(text) {
   // CSV initial parse
   // data format: [{exit_station, entry_stations: {station: entry_count}, exit_total}...]
   var data = d3.csvParse(text.split('\n').slice(1).join(`\n`), function(d) {
@@ -175,7 +175,7 @@ d3.text("bart/entry_exit_bart2.21_aggregated.csv").then(function(text) {
       .enter()
       .append("path")
       //.data(function(d) {console.log(d)})
-      .attr("class", function(d) {console.log(d)})
+      // .attr("class", function(d) {console.log(d)})
       .attr("d", d3.ribbonArrow().radius(700).padAngle(0).headRadius(30))
       .style("fill", function(d){ return(colors_alt(d.source.index)) })
       .attr("class", function(d){

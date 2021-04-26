@@ -1,6 +1,6 @@
 var debug;
 var settings = {"rename": true, "normalized": false}
-d3.json("cta-rides.json", function(d){
+d3.json("static/info/cta-rides.json", function(d){
     // console.log(d)
 }).then(function(data) {
     // functional definitions
@@ -35,8 +35,8 @@ d3.json("cta-rides.json", function(d){
     console.log(change_data)
 
     // variable definitions
-    var size = 16
-    var width = size * data.length
+    var size = 5
+    var width = 1300
     var innerHeight = size * stations.length
     var margin = {top: 70, right: 1, bottom: 40, left: 150}
 
@@ -82,7 +82,7 @@ d3.json("cta-rides.json", function(d){
         .data(d => d)
         .join("rect")
             .attr("x", (d, i) => {return xScale(data[i].date)})
-            .attr("width", size)
+            .attr("width", width/data.length)
             .attr("height", yScale.bandwidth() - 1)
             // .call(d => console.log(d))
             .attr("fill", (d, i) => {return isNaN(d) ? "#eee" : d === 0 ? "#fff" : color(d) })

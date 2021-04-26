@@ -1,9 +1,9 @@
 var ridership_min = 2000;
-var prep_data, ride_connections, graphed_stations;
-var height = 900, width = 1200;
-var color = d3.scaleOrdinal(d3.schemeTableau10);
+var prep_data;
+var height = 800, width = 1200;
 
 function chart(data){
+  var color = d3.scaleOrdinal(d3.schemeTableau10);
   const links = data.links;
   const nodes = data.nodes;
 
@@ -66,7 +66,7 @@ function chart(data){
 
   node.append("circle")
       .attr("stroke", "white")
-      .attr("fill", d => color(d.id))
+      .attr("fill", d => {return color(d.id)})
       .attr("stroke-width", 1.5)
       .attr("r", function(d){return 5 + 0.25*(d.value/1000)});
 
@@ -121,7 +121,7 @@ function linkArc(d) {
   `;
 }
 
-d3.text("data/bart/entry_exit_bart2.21_aggregated.csv").then(function(text) {
+d3.text("static/bart/entry_exit_bart2.21_aggregated.csv").then(function(text) {
 // CSV initial parse
 // data format: [{exit_station, entry_stations: {station: entry_count}, exit_total}...]
 prep_data = d3.csvParse(text.split('\n').slice(1).join(`\n`), function(d) {
@@ -137,33 +137,52 @@ prep_data = d3.csvParse(text.split('\n').slice(1).join(`\n`), function(d) {
 });
 console.log("LOADED DATA", prep_data)
 
-station_names = prep_data.filter(d => d.exit_station != "Entries").map(d => d.exit_station)
-console.log("STATION NAMES", station_names)
+
 
 // d3.csv()
 
-ride_connections = [];
-graphed_stations = [];
-station_names.forEach(entry_val => {
-  station_data = prep_data.filter(d => d.exit_station === entry_val)[0]
-  station_data.entry_stations = Object.fromEntries(Object.entries(station_data.entry_stations).filter(([k,v]) => v >= ridership_min));
-  Object.entries(station_data.entry_stations).forEach(([entry_station, ridership]) => {
-    ride_connections.push({source: entry_station, target: station_data.exit_station, value: ridership})
+function execgraph(){
+  var station_names = prep_data.filter(d => d.exit_station != "Entries").map(d => d.exit_station)
+  console.log("STATION NAMES", station_names) 
+  var ride_connections = [];
+  var graphed_stations = [];
+  console.log(ridership_min)
+  // console.log(prep_data, "PREP")
+  console.log("STATIONS ", station_names)
+  station_names.forEach(entry_val => {
+    console.log(ridership_min)
+    station_data = prep_data.filter(d => d.exit_station === entry_val)[0]
+    station_data.entry_stations = Object.fromEntries(Object.entries(station_data.entry_stations).filter(([k,v]) => v >= ridership_min));
+    Object.entries(station_data.entry_stations).forEach(([entry_station, ridership]) => {
+      ride_connections.push({source: entry_station, target: station_data.exit_station, value: ridership})
+    })
+    // if (ride_connections[ride_connections.length - 1].target === station_data.exit_station){
+    //   graphed_stations.push(station_data.exit_station)
+    // }
   })
-  // if (ride_connections[ride_connections.length - 1].target === station_data.exit_station){
-  //   graphed_stations.push(station_data.exit_station)
-  // }
-})
-console.log(ride_connections)
-fin_data = ({nodes: Array.from(new Set(ride_connections.flatMap(l => [l.source, l.target])), id => ({id, value:ride_connections.filter(d => d.source == id).reduce(function (sum, curr) { return sum+curr.value },0)})), links: ride_connections})
-//fin_data =  {nodes: graphed_stations, links: ride_connections}
-console.log("FILTERED CONNECTIONS", fin_data)
+  console.log(ride_connections)
+  fin_data = ({nodes: Array.from(new Set(ride_connections.flatMap(l => [l.source, l.target])), id => ({id, value:ride_connections.filter(d => d.source == id).reduce(function (sum, curr) { return sum+curr.value },0)})), links: ride_connections})
+  //fin_data =  {nodes: graphed_stations, links: ride_connections}
+  console.log("FILTERED CONNECTIONS", fin_data)
 
-graph = chart(fin_data)
-console.log(graph)
+  graph = chart(fin_data)
+  // console.log(graph)
+  return graph
+}
 
-d3.select("body")
+graph = execgraph()
+curr = d3.select("#network")
    .append(() => graph);
+
+d3.select("#ridership").on("input", function() {
+  console.log("CHANGED to ", this.value)
+  ridership_min = this.value;
+  curr.remove()
+  graph = execgraph()
+  curr = d3.select("#network")
+    .append(() => graph)
+});
+
 
 // var width = 1200,
 //     height = 700;
