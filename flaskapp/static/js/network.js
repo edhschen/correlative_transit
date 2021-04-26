@@ -143,27 +143,30 @@ console.log("LOADED DATA", prep_data)
 
 function execgraph(){
   var station_names = prep_data.filter(d => d.exit_station != "Entries").map(d => d.exit_station)
-  console.log("STATION NAMES", station_names) 
+  // console.log("STATION NAMES", station_names) 
   var ride_connections = [];
   var graphed_stations = [];
-  console.log(ridership_min)
+  // console.log(ridership_min)
+  // console.log(typeof ridership_min)
   // console.log(prep_data, "PREP")
-  console.log("STATIONS ", station_names)
+  // console.log("STATIONS ", station_names)
   station_names.forEach(entry_val => {
-    console.log(ridership_min)
+    // console.log(ridership_min)
     station_data = prep_data.filter(d => d.exit_station === entry_val)[0]
-    station_data.entry_stations = Object.fromEntries(Object.entries(station_data.entry_stations).filter(([k,v]) => v >= ridership_min));
-    Object.entries(station_data.entry_stations).forEach(([entry_station, ridership]) => {
+    // console.log("debug", station_data)
+    var temp = Object.fromEntries(Object.entries(station_data.entry_stations).filter(([k,v]) => v >= ridership_min));
+    // console.log("debug 2", temp)
+    Object.entries(temp).forEach(([entry_station, ridership]) => {
       ride_connections.push({source: entry_station, target: station_data.exit_station, value: ridership})
     })
     // if (ride_connections[ride_connections.length - 1].target === station_data.exit_station){
     //   graphed_stations.push(station_data.exit_station)
     // }
   })
-  console.log(ride_connections)
+  // console.log(ride_connections)
   fin_data = ({nodes: Array.from(new Set(ride_connections.flatMap(l => [l.source, l.target])), id => ({id, value:ride_connections.filter(d => d.source == id).reduce(function (sum, curr) { return sum+curr.value },0)})), links: ride_connections})
   //fin_data =  {nodes: graphed_stations, links: ride_connections}
-  console.log("FILTERED CONNECTIONS", fin_data)
+  // console.log("FILTERED CONNECTIONS", fin_data)
 
   graph = chart(fin_data)
   // console.log(graph)
@@ -176,7 +179,7 @@ curr = d3.select("#network")
 
 d3.select("#ridership").on("input", function() {
   console.log("CHANGED to ", this.value)
-  ridership_min = this.value;
+  ridership_min = +this.value;
   curr.remove()
   graph = execgraph()
   curr = d3.select("#network")
