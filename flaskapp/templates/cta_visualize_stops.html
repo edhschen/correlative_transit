@@ -67,7 +67,7 @@
 
   <body>
     <label>Date?</label>
-    <input id="date" type="date" value="2019-01-06" onchange="updateDate(event)">
+    <input id="date" type="date" value="2019-01-09" onchange="updateDate(event)">
 
     <div id="map" style="width: 100vw; height: 100vh;"></div>
     <div id="prediction">
@@ -190,7 +190,7 @@
     }
     $.ajax({
       type:"GET",
-      url: "/cta/bus/daily/01062019",
+      url: "/cta/bus/daily/01092019",
       dataType: "json",
       success: function(r){
         data = r
