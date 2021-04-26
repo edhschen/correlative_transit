@@ -29,6 +29,18 @@
     .wrapper {
         width: 50%;
         margin: 0 auto;
+        min-width: 700px;
+    }
+    .horcenter{
+        margin: 0 auto;
+        width: fit-content;
+    }
+    .sfont{
+        font-size: 5;
+    }
+    h1 {
+        font-weight: 900;
+        font-size: 2rem;
     }
     </style>
 
@@ -40,20 +52,27 @@
 </head>
 <body>
 
-    <div id = "container"></div>
+    
     <div class="wrapper">
-        <h3 style="margin-bottom:0.5rem">SF Bay Bart Directed Ridership</h3>
+        <h1 style="margin-bottom:4rem;">Ridership Information Visualizations</h1>
+        <h3 style="margin-bottom:0.5rem">SF Bay Bart Directed Network Ridership</h3>
         <div class="slider">
             <label>Minimum Ridership</label>
             <input id="ridership" name="ridership" type="range" min="500" max="3000" step="100" value="2000" onchange="updateLabel(this.value);"></input>
             <span id="ridership_val">2000</span>
         </div>
         <p style="margin-top:0.5rem">Select a minimum ridership threshold to visualize a certain subset of the stations. Ridership is shown with node size, and directed trips are shown by link width. Links are stroked with the color of their origin station. Data analyzed over 2020.</p>
-        <div id="network"></div>
-        <script src = "/static/js/network.js"></script>
     </div>
+    <div id="network" class = "horcenter"></div>
+    <script src = "/static/js/network.js"></script>
 
+    <div class="wrapper">
+        <h3 style="margin-bottom:0.5rem">SF Bay Bart Directed Chord Ridership</h3>
+        <p style="margin-top:0.5rem">Another way to analyze trips that gives a better idea of relative throughput would be the chord graph, due to the higher leeway in stroke widths. Hover over a station to see it's trips highlighted. Once again, trips are stroked with the color of the origin station.</p>
+    </div>
+    <div id = "chord" class = "horcenter"></div>
     <script src = "/static/js/chord.js"></script>
+
     <script src = "/static/js/heatmap.js"></script>    
 </body>
 </html>

@@ -115,12 +115,12 @@ d3.text("static/bart/entry_exit_bart2.21_aggregated.csv").then(function(text) {
     data_matrix[i][i] = 0
   })
 
-  var svg = d3.select("#container")
+  var svg = d3.select("#chord")
     .append("svg")
-      .attr("width", 1550)
-      .attr("height", 1550)
+      .attr("width", 820)
+      .attr("height", 820)
     .append("g")
-      .attr("transform", "translate(750,750)")
+      .attr("transform", "translate(410,410)")
 
   var res = d3.chordDirected()
       .padAngle(0.05)
@@ -176,7 +176,7 @@ d3.text("static/bart/entry_exit_bart2.21_aggregated.csv").then(function(text) {
       .append("path")
       //.data(function(d) {console.log(d)})
       // .attr("class", function(d) {console.log(d)})
-      .attr("d", d3.ribbonArrow().radius(700).padAngle(0).headRadius(30))
+      .attr("d", d3.ribbonArrow().radius(350).padAngle(0).headRadius(15))
       .style("fill", function(d){ return(colors_alt(d.source.index)) })
       .attr("class", function(d){
         if ((station_names[d.source.index] == "AS") & (station_names[d.target.index] == "BK")){
@@ -227,14 +227,14 @@ d3.text("static/bart/entry_exit_bart2.21_aggregated.csv").then(function(text) {
 
   svg.append("g")
     .attr("font-family", "sans-serif")
-    .attr("font-size", 25)
+    .attr("font-size", 12)
   .selectAll("g")
   .data(res.groups)
   .join("g")
     .call(g => g.append("path")
       .attr("d", d3.arc()
-        .innerRadius(700)
-        .outerRadius(750))
+        .innerRadius(350)
+        .outerRadius(375))
       .attr("fill", d => colors_alt(d.index)))
       .on("mouseover", function(d) {focusin(station_names[d3.select(this).datum().index])})
       .on("mouseout", function(d) {focusout()})
@@ -242,8 +242,8 @@ d3.text("static/bart/entry_exit_bart2.21_aggregated.csv").then(function(text) {
       .attr('transform', function (d) {
         return 'translate(' +
           d3.arc()
-            .innerRadius(700)
-            .outerRadius(750).startAngle(d.startAngle)
+            .innerRadius(350)
+            .outerRadius(375).startAngle(d.startAngle)
           .endAngle(d.endAngle)
           .centroid() // this is an array, so will automatically be printed out as x,y
            + ')'

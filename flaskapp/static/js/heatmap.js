@@ -57,6 +57,7 @@ d3.json("static/info/cta-rides.json", function(d){
         .call(g => g.select(".domain").remove())
     yAxis = g => g
         .attr("transform", `translate(${margin.left},0)`)
+        .attr("class", "sfont")
         .call(d3.axisLeft(yScale).tickSize(0))
         .call(g => g.select(".domain").remove())
 
@@ -66,7 +67,7 @@ d3.json("static/info/cta-rides.json", function(d){
         .attr("height", innerHeight + margin.top + margin.bottom)
         // .attr("viewBox", [0, 0, width, innerHeight + margin.top + margin.bottom])
         .attr("font-family", "sans-serif")
-        .attr("font-size", 10)
+        .attr("font-size", 5)
     
     // append and style additional required svg elements
     svg.append("g")
