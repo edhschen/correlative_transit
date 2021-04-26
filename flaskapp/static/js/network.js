@@ -1,6 +1,6 @@
 var ridership_min = 2000;
 var prep_data;
-var height = 800, width = 1200;
+var height = 730, width = 900;
 
 function chart(data){
   var color = d3.scaleOrdinal(d3.schemeTableau10);
@@ -44,7 +44,7 @@ function chart(data){
     .data(links)
     .join("path")
       .attr("stroke", d => color(d.source.id))
-      .attr("stroke-width", function(d) {return 0.1 + 0.5*(d.value/1000)})
+      .attr("stroke-width", function(d) {return 0.1 + 1*(d.value/1000)})
     // .join("path")
     //   .attr("stroke-width", 1.5)
       // .attr("marker-end", d => `url(#arrow)`);
