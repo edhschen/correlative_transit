@@ -42,6 +42,15 @@
         font-weight: 900;
         font-size: 2rem;
     }
+    .label{
+        font-size: 10;
+    }
+    select{
+        font-family: inherit;
+        vertical-align: bottom;
+        background: #f2f0f1;
+        border-radius: 0.2rem;        
+    }
     </style>
 
     <script>
@@ -52,9 +61,37 @@
 </head>
 <body>
 
-    
+
     <div class="wrapper">
         <h1 style="margin: 3rem 0rem 3rem 0rem;">Ridership Information Visualizations</h1>
+        <h3 style="margin-bottom:0.5rem">Ridership Time-Series Heatmap</h3>
+        <div class="slider" style="align-items: inherit;">
+            <label style="margin-right:0.25rem">Select Dataset: </label>
+            <!-- <input id="chord_in" name="chord_in" type="range" min="2" max="50" step="1" value="20" onchange="updateLabel(`chord`,this.value);"></input>
+            <span id="chord_val">20</span> -->
+            <select id="heat_data">
+                <option value="sfbay-bart-exits" selected>SF Bay Bart 2021</option>
+                <option value="cta-rides-2020">Chicago Metro 2020</option>
+                <option value="mta-exits-2019">NYC MTA 2019</option>
+                <option value="mta-exits-2020">NYC MTA 2020</option>
+                <option value="mta-exits-2021">NYC MTA 2021</option>
+            </select>
+            <label style="margin-left: 1rem;">Normalized</label>
+            <input type="checkbox" id="heat_norm">
+            <label style="margin-left: 1rem; margin-right: 0.25rem">Select Type: </label>
+            <!-- <input id="chord_in" name="chord_in" type="range" min="2" max="50" step="1" value="20" onchange="updateLabel(`chord`,this.value);"></input>
+            <span id="chord_val">20</span> -->
+            <select id="heat_type">
+                <option value="count" selected>Ridership Count</option>
+                <option value="change">Percentage Change</option>
+            </select>
+        </div>
+        <p style="margin:0.5rem 0rem 3rem 0rem">A good way to visualize the long-term trends of transit demand is over a heatmap that compares different aspects in a long-term time based analysis. Select a mode of comparison, and a dataset to view the relevant metrics in the heatmap below. Please mind the wait! Datasets may need to load :)</p>
+    </div>
+    <div id = "heatmap" class = "horcenter"></div>
+    <script src = "/static/js/heatmap.js"></script>    
+
+    <div class="wrapper">
         <h3 style="margin-bottom:0.5rem">SF Bay Bart Directed Network Ridership</h3>
         <div class="slider">
             <label>Minimum Ridership</label>
@@ -75,9 +112,7 @@
         </div>
         <p style="margin-top:0.5rem">Another way to analyze trips that gives a better idea of relative throughput would be the chord graph, due to the higher leeway in stroke widths. Hover over a station to see it's trips highlighted. Once again, trips are stroked with the color of the origin station.</p>
     </div>
-    <div id = "chord" class = "horcenter"></div>
+    <div id = "chord" class = "horcenter" style="margin-bottom:5rem;"></div>
     <script src = "/static/js/chord.js"></script>
-
-    <script src = "/static/js/heatmap.js"></script>    
 </body>
 </html>

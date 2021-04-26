@@ -1,6 +1,6 @@
 var ridership_min = 2000;
 var prep_data;
-var height = 680, width = 800;
+var height = 660, width = 800;
 
 function chart(data){
   var color = d3.scaleOrdinal(d3.schemeTableau10);
@@ -10,7 +10,7 @@ function chart(data){
   const simulation = d3.forceSimulation(Object.values(nodes))
       .force("link", d3.forceLink(links).id(d => d.id).distance(150))
       .force("charge", d3.forceManyBody().strength(-900))//.distanceMax
-      .force('center', d3.forceCenter(width / 2, height / 2 - 30))
+      .force('center', d3.forceCenter(width / 2, height / 2 ))
       //.force("collide", d3.forceCollide().radius(d => d.r + 1).iterations(3))
       .force("x", d3.forceX())
       .force("y", d3.forceY())
