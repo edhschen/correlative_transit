@@ -17,6 +17,7 @@ function genviz(filepath){
                 data[i].values.exits = data[i].values[key_name] 
                 delete data[i].values[key_name]
             }
+            settings.rename = false;
             if(settings.normalized){
                 var total = Object.values(data[i].values.exits).reduce((a,b) => a+b, 0)
                 data[i].total = total
